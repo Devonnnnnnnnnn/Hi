@@ -109,4 +109,4 @@ function startBot() {
   // Since you want to combine, let's *not* start express here.
 }
 
-module.exports = { startBot };
+startBot() 
