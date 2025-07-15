@@ -114,7 +114,7 @@ function startBot() {
     res.send("Bot is alive!");
   });
 
-  app.listen(PORT, () => {
+  app.listen(PORT, "0.0.0.0", () => {
     console.log(`Express server listening on port ${PORT}`);
   });
 }
