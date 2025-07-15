@@ -47,6 +47,7 @@ function loadCommands(dir) {
     }
   }
 }
+
 let lastNotifiedDate = null;
 
 function startUpdateNotifier() {
@@ -105,8 +106,17 @@ function startBot() {
 
   client.login(process.env.TOKEN);
 
-  // Set up express server for bot "ping" endpoint on a different port or path?
-  // Since you want to combine, let's *not* start express here.
+  // Start express server to keep bot alive with ping trick
+  const PORT = process.env.PORT || 3000;
+  const app = express();
+
+  app.get("/", (req, res) => {
+    res.send("Bot is alive!");
+  });
+
+  app.listen(PORT, () => {
+    console.log(`Express server listening on port ${PORT}`);
+  });
 }
 
-startBot() 
+startBot();
