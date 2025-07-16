@@ -9,14 +9,6 @@ try {
   usersData = {};
 }
 
-const styleDataPath = path.join(__dirname, "..", "data", "styleData.json");
-let styleData = {};
-try {
-  styleData = JSON.parse(fs.readFileSync(styleDataPath, "utf8"));
-} catch {
-  styleData = {};
-}
-
 const verifiedUsersPath = path.join(__dirname, "..", "data", "verifiedUsers.json");
 let verifiedUsers = {};
 try {
@@ -32,9 +24,7 @@ module.exports = {
   description: "View profile.",
   async execute(message) {
     const target = message.mentions.users.first() || message.author;
-    const member = message.guild.members.cache.get(target.id);
 
-    const style = styleData?.[target.id] ?? "No style set";
     const roblox = verifiedUsers?.[target.id] ?? "Not verified";
 
     const userXP = usersData[target.id] || 0;
@@ -44,7 +34,6 @@ module.exports = {
       .setAuthor({ name: target.tag, iconURL: target.displayAvatarURL() })
       .setDescription(`🏆 XP: **${xpInfo.xp}**\n🆙 Level: **${xpInfo.level}**`)
       .addFields(
-        { name: "Style", value: style, inline: true },
         { name: "Roblox", value: roblox, inline: true },
         { name: "ID", value: target.id, inline: true }
       );
