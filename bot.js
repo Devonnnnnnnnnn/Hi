@@ -112,8 +112,7 @@ console.log("Logging in with token (first 10 chars):", process.env.TOKEN?.slice(
   const app = express();
 
   app.get("/", (req, res) => {
-   const user = req.query.user || "Unknown User";
-
+  const user = req.query.user || client.user?.username || "Bot";
 res.send(`Bot is running and active for user: ${user}.\nStatus: Online.\nChecked at: ${new Date().toISOString()}`);
   });
 
