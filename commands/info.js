@@ -1,38 +1,25 @@
-const { EmbedBuilder } = require("discord.js");
-const styleInfo = require("../data/styleInfo.js");
-const abilityInfo = require("../data/abilityInfo.js");
-const styleStats = require("../data/styleStats.js");
-
 module.exports = {
   name: "info",
   aliases: ["information"],
-  description: "Get info on style or ability.",
+  description: "Get style or ability key name only.",
   async execute(message, argsString) {
     if (!argsString) return message.channel.send("❗ Usage: `!info <style/ability>`");
 
     const q = argsString.toLowerCase();
-    const sk = Object.keys(styleInfo).find(
-      (k) => k.toLowerCase() === q || k.toLowerCase().includes(q),
-    );
-    const ak = Object.keys(abilityInfo).find(
-      (k) => k.toLowerCase() === q || k.toLowerCase().includes(q),
+
+    // Find style key (just exact or substring match)
+    const sk = Object.keys(require("../data/styleInfo.js")).find(
+      (key) => key.toLowerCase() === q || key.toLowerCase().includes(q)
     );
 
-    if (!sk && !ak)
-      return message.channel.send("❌ No matching style or ability.");
+    // Find ability key
+    const ak = Object.keys(require("../data/abilityInfo.js")).find(
+      (key) => key.toLowerCase() === q || key.toLowerCase().includes(q)
+    );
 
-    const embed = new EmbedBuilder().setColor(0x0099ff);
-    if (sk) {
-      embed
-        .setTitle(`📝 Style: ${sk}`)
-        .setDescription(styleInfo[sk])
-        .addFields({
-          name: "Technique Score",
-          value: styleStats[sk]?.toString() ?? "Unknown",
-        });
-    } else {
-      embed.setTitle(`📝 Ability: ${ak}`).setDescription(abilityInfo[ak]);
-    }
-    return message.channel.send({ embeds: [embed] });
+    if (sk) return message.channel.send(`📝 Style: ${sk}`);
+    if (ak) return message.channel.send(`📝 Ability: ${ak}`);
+
+    return message.channel.send("❌ No matching style or ability.");
   },
 };
