@@ -1,4 +1,4 @@
-const usersData = require("../users.json"); // or your in-memory object
+const usersData = require("../json/users.json");
 const { saveUsers } = require("../utils");
 
 module.exports = {
