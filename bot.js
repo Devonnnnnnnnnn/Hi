@@ -2,16 +2,10 @@ require("dotenv").config();
 
 const fs = require("fs");
 const path = require("path");
-const { DateTime } = require("luxon");
 const express = require("express");
-const {
-  Client,
-  GatewayIntentBits,
-  Partials,
-} = require("discord.js");
+const { Client, GatewayIntentBits, Partials } = require("discord.js");
 
-const TARGET_CHANNEL_ID = "1391145791623663718";
-const TARGET_ROLE_ID = "1388462648739500134";
+const prefix = "!";
 
 const client = new Client({
   intents: [
@@ -24,22 +18,19 @@ const client = new Client({
   partials: [Partials.Message, Partials.Channel, Partials.Reaction],
 });
 
-const prefix = "!";
-
-const commands = new Map();
+// Load commands
+client.commands = new Map();
 function loadCommands(dir) {
   const entries = fs.readdirSync(dir, { withFileTypes: true });
 
   for (const entry of entries) {
     const fullPath = path.join(dir, entry.name);
-
     if (entry.isDirectory()) {
       loadCommands(fullPath);
     } else if (entry.name.endsWith(".js")) {
       const command = require(fullPath);
-
       if (command.name && typeof command.execute === "function") {
-        commands.set(command.name, command);
+        client.commands.set(command.name, command);
         console.log(`Loaded command: ${command.name}`);
       } else {
         console.warn(`Skipping invalid command file: ${fullPath}`);
@@ -48,72 +39,66 @@ function loadCommands(dir) {
   }
 }
 
-let lastNotifiedDate = null;
+// Load events
+function loadEvents(dir) {
+  const entries = fs.readdirSync(dir, { withFileTypes: true });
 
-function startUpdateNotifier() {
-  setInterval(async () => {
-    const now = DateTime.now().setZone("Europe/Prague");
-
-    if (
-      now.weekday === 6 &&
-      now.hour === 16 &&
-      now.minute === 0 &&
-      (!lastNotifiedDate || lastNotifiedDate !== now.toISODate())
-    ) {
-      lastNotifiedDate = now.toISODate();
-
-      const channel = client.channels.cache.get(TARGET_CHANNEL_ID);
-      if (!channel) {
-        console.error("Target channel not found.");
-        return;
-      }
-
-      try {
-        await channel.send(`<@&${TARGET_ROLE_ID}> The update has released! Go check it out. 🌻`);
-        console.log("Update notification sent.");
-      } catch (err) {
-        console.error("Failed to send update notification:", err);
+  for (const entry of entries) {
+    const fullPath = path.join(dir, entry.name);
+    if (entry.isDirectory()) {
+      loadEvents(fullPath);
+    } else if (entry.name.endsWith(".js")) {
+      const event = require(fullPath);
+      if (event.name && typeof event.execute === "function") {
+        if (event.once) {
+          client.once(event.name, (...args) => event.execute(...args));
+        } else {
+          client.on(event.name, (...args) => event.execute(...args));
+        }
+        console.log(`Loaded event: ${event.name}`);
+      } else {
+        console.warn(`Skipping invalid event file: ${fullPath}`);
       }
     }
-  }, 60 * 1000);
+  }
 }
 
+// Message command handler
 client.on("messageCreate", async (message) => {
   if (!message.content.startsWith(prefix) || message.author.bot) return;
 
   const args = message.content.slice(prefix.length).trim().split(/\s+/);
   const commandName = args.shift().toLowerCase();
 
-  const command = commands.get(commandName);
+  const command = client.commands.get(commandName);
   if (!command) return;
 
   try {
-    await command.execute(message, args);
+    await command.execute(message, args.join(" "));
   } catch (error) {
     console.error(error);
     message.reply("There was an error executing that command.");
   }
 });
 
-function startBot() {
+async function startBot() {
   loadCommands(path.join(__dirname, "commands"));
-  client.commands = commands;
+  loadEvents(path.join(__dirname, "events"));
 
   client.once("ready", () => {
     console.log(`✅ Logged in as ${client.user.tag}`);
-    startUpdateNotifier();
   });
-  
-console.log("Logging in with token (first 10 chars):", process.env.TOKEN?.slice(0, 10));
-  client.login(process.env.TOKEN);
 
-  // Start express server to keep bot alive with ping trick
-  const PORT = process.env.PORT || 3000;
+  console.log("Logging in with token (first 10 chars):", process.env.TOKEN?.slice(0, 10));
+  await client.login(process.env.TOKEN);
+
+  // Express server to keep bot alive
   const app = express();
+  const PORT = process.env.PORT || 3000;
 
   app.get("/", (req, res) => {
-  const user = req.query.user || client.user?.username || "Bot";
-res.send(`Bot is running and active for user: ${user}.\nStatus: Online.\nChecked at: ${new Date().toISOString()}`);
+    const user = req.query.user || client.user?.username || "Bot";
+    res.send(`Bot is running and active for user: ${user}.\nStatus: Online.\nChecked at: ${new Date().toISOString()}`);
   });
 
   app.listen(PORT, "0.0.0.0", () => {
