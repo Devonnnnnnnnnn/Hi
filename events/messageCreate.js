@@ -1,26 +1,34 @@
-const usersData = require("../json/users.json");
-const { saveUsers } = require("../utils");
-
 module.exports = {
   name: "messageCreate",
   async execute(message) {
-    if (message.author.bot) return;
+    if (message.author.bot) return; // Ignore bots
 
-    const userId = message.author.id;
-    const user = usersData[userId];
-    if (!user) return; // no profile
+    const content = message.content;
 
-    user.xp += 5;
+    try {
+      const response = await fetch(`https://www.purgomalum.com/service/containsprofanity?text=${encodeURIComponent(content)}`);
+      const containsProfanityText = await response.text();
+      const containsProfanity = containsProfanityText === "true";
 
-    // Level up check
-    while (user.xp >= user.xpRequired) {
-      user.xp -= user.xpRequired;
-      user.level++;
-      user.xpRequired = Math.floor(user.xpRequired * 1.15);
-      user.coins += 50;
-      message.channel.send(`🎉 Congrats ${message.author}, you leveled up to **${user.level}**!`);
+      if (containsProfanity) {
+        // Try to delete the message
+        try {
+          await message.delete();
+        } catch (err) {
+          console.error("Failed to delete message:", err);
+        }
+
+        // DM the user a warning
+        try {
+          await message.author.send(
+            "⚠️ Your message contained inappropriate language and was deleted. Please watch your language."
+          );
+        } catch (err) {
+          console.error("Failed to send DM to user:", err);
+        }
+      }
+    } catch (err) {
+      console.error("Error checking profanity:", err);
     }
-
-    saveUsers(usersData);
   },
 };
