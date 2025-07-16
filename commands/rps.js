@@ -1,3 +1,5 @@
+const { EmbedBuilder } = require("discord.js");
+
 const choices = ["rock", "paper", "scissors"];
 const emojis = {
   rock: "🪨",
@@ -33,14 +35,19 @@ module.exports = {
       result = "You lose! 😢";
     }
 
-    const response = 
-      `You chose: ${emojis[userChoice]} **${userChoice}**\n` +
-      `I chose: ${emojis[botChoice]} **${botChoice}**\n\n` +
-      `**${result}**`;
+    const embed = new EmbedBuilder()
+      .setTitle("Rock Paper Scissors")
+      .setColor(0x0099ff)
+      .addFields(
+        { name: "Your Choice", value: `${emojis[userChoice]} ${userChoice}`, inline: true },
+        { name: "Bot's Choice", value: `${emojis[botChoice]} ${botChoice}`, inline: true },
+        { name: "Result", value: result }
+      )
+      .setTimestamp();
 
-    const sentMsg = await message.channel.send(response);
+    const sentMsg = await message.channel.send({ embeds: [embed] });
 
-    // Optional: React with the bot's choice emoji for fun
+    // Optional: react with bot's choice emoji
     await sentMsg.react(emojis[botChoice]);
 
     return null;
