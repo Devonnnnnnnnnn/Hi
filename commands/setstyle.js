@@ -1,27 +1,40 @@
 const fs = require("fs");
 const path = require("path");
-const styleStats = require("../data/styleStats.js");
+const styleStats = require("../info/styleInfo.js"); // Import style definitions
 
-const styleDataPath = path.join(__dirname, "..", "info", "styleInfo.js");
-let styleData = {};
+const userStylesPath = path.join(__dirname, "..", "data", "userStyles.json");
+
+// Load user styles from file, or initialize empty object
+let userStyles = {};
 try {
-  styleData = JSON.parse(fs.readFileSync(styleDataPath, "utf8"));
+  userStyles = JSON.parse(fs.readFileSync(userStylesPath, "utf8"));
 } catch {
-  styleData = {};
+  userStyles = {};
 }
 
 module.exports = {
   name: "setstyle",
   description: "Set your style.",
   async execute(message, argsString) {
-    if (!argsString) return message.channel.send("❗ Usage: `!setstyle <style>`");
+    if (!argsString) {
+      return message.channel.send("❗ Usage: `!setstyle <style>`");
+    }
 
     const input = argsString.toLowerCase();
-    const key = Object.keys(styleStats).find((k) => k.toLowerCase() === input);
-    if (!key) return message.channel.send("❌ Style not found.");
+    // Find a style key case-insensitive
+    const key = Object.keys(styleStats).find(k => k.toLowerCase() === input);
+    if (!key) {
+      return message.channel.send("❌ Style not found. Available styles:\n" + Object.keys(styleStats).join(", "));
+    }
 
-    styleData[message.author.id] = key;
-    fs.writeFileSync(styleDataPath, JSON.stringify(styleData, null, 2));
+    // Save user's style choice
+    userStyles[message.author.id] = key;
+    try {
+      fs.writeFileSync(userStylesPath, JSON.stringify(userStyles, null, 2));
+    } catch (err) {
+      console.error("Failed to save user styles:", err);
+      return message.channel.send("❌ Could not save your style. Please try again later.");
+    }
 
     return message.channel.send(`✅ Your style has been set to **${key}**.`);
   },
