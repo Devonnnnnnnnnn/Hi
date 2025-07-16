@@ -18,6 +18,12 @@ const client = new Client({
   partials: [Partials.Message, Partials.Channel, Partials.Reaction],
 });
 
+const adminIDs = [
+  "826494218355605534",
+  "1385377368108961884",
+  "1231292898469740655"
+]
+
 // Load commands
 client.commands = new Map();
 function loadCommands(dir) {
