@@ -1,3 +1,5 @@
+const { EmbedBuilder } = require("discord.js");
+
 module.exports = {
   name: "uptime",
   description: "Show bot uptime.",
@@ -7,8 +9,13 @@ module.exports = {
     const minutes = Math.floor((totalSeconds % 3600) / 60);
     const seconds = Math.floor(totalSeconds % 60);
 
-    return message.channel.send(
-      `⏱️ Uptime: ${hours}h ${minutes}m ${seconds}s`
-    );
+    const embed = new EmbedBuilder()
+      .setTitle("⏱️ Bot Uptime")
+      .setColor(0x00aeef)
+      .setDescription(`**${hours}** hours, **${minutes}** minutes, **${seconds}** seconds`)
+      .setTimestamp();
+
+    return message.channel.send({ embeds: [embed] });
   },
 };
+
