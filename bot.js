@@ -103,7 +103,8 @@ function startBot() {
     console.log(`✅ Logged in as ${client.user.tag}`);
     startUpdateNotifier();
   });
-
+  
+console.log("Logging in with token (first 10 chars):", process.env.TOKEN?.slice(0, 10));
   client.login(process.env.TOKEN);
 
   // Start express server to keep bot alive with ping trick
