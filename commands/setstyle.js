@@ -1,6 +1,6 @@
 const fs = require("fs");
 const path = require("path");
-const styleStats = require("../info/styleInfo.js"); // Import style definitions
+const styleStats = require("../data/styleInfo.js"); // Import style definitions
 
 const userStylesPath = path.join(__dirname, "..", "data", "userStyles.json");
 
