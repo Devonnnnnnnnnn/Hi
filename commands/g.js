@@ -1,6 +1,6 @@
 const fs = require('fs');
 const { DateTime } = require('luxon');
-const { EmbedBuilder } = require('discord.js');
+const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 
 const giveawayPath = './giveaways.json';
 let giveawayInfo = {};
@@ -37,24 +37,35 @@ function parseDuration(str) {
   }
 }
 
+function parseArgs(args) {
+  const joined = args.join(' ');
+  const parts = joined.match(/(?:[^,"]+|"[^"]*")+/g);
+  if (!parts || parts.length < 3) return null;
+  return parts.slice(0, 3).map(p => p.trim().replace(/^"|"$/g, ''));
+}
+
 module.exports = {
   name: 'g',
-  description: 'Create a giveaway',
+  description: 'Create a giveaway (Admin only)',
   async execute(message, args, adminIDs) {
     if (!adminIDs.includes(message.author.id)) {
-      return message.channel.send("❌ You don’t have permission to use this.");
+      return message.channel.send("❌ You don’t have permission to use this command.");
     }
 
-    const argsString = args.join(' ');
-    const [name, prize, durationStr] = argsString.split(',').map(s => s.trim());
-
-    if (!name || !prize || !durationStr) {
-      return message.channel.send("❗ Usage: `!g <name>, <prize>, <duration>`");
+    const parsed = parseArgs(args);
+    if (!parsed) {
+      return message.channel.send("❗ Usage: `!g <name>, <prize>, <duration>`\nExample: `!g \"Super Giveaway\", Nitro, 1h`");
     }
+
+    const [name, prize, durationStr] = parsed;
 
     const duration = parseDuration(durationStr);
     if (!duration) {
-      return message.channel.send("❌ Use a valid duration (10m, 2h, 1d).");
+      return message.channel.send("❌ Use a valid duration like `10m`, `2h`, or `1d`.");
+    }
+
+    if (Object.values(giveawayInfo).some(gw => gw.name.toLowerCase() === name.toLowerCase())) {
+      return message.channel.send("⚠️ A giveaway with this name already exists. Please choose a different name.");
     }
 
     const endsAt = DateTime.now().plus(duration);
@@ -63,17 +74,28 @@ module.exports = {
     const embed = new EmbedBuilder()
       .setTitle(`🎁 Giveaway: ${name}`)
       .setDescription(
-        `🎉 **Prize**: ${prize}\n` +
-        `🕒 **Ends At**: <t:${Math.floor(endsAt.toSeconds())}:F>\n` +
-        `React with 🎉 to enter!\n` +
-        `🔑 **ID**: \`${id}\``
+        `🎉 **Prize:** ${prize}\n` +
+        `🕒 **Ends at:** <t:${Math.floor(endsAt.toSeconds())}:F>\n\n` +
+        `Use the buttons below to enter or leave the giveaway!\n` +
+        `🔑 **Giveaway ID:** \`${id}\``
       )
-      .setColor(0xffd700)
-      .setFooter({ text: `Hosted by ${message.author.username}` })
+      .setColor('#FFD700')
+      .setFooter({ text: `Hosted by ${message.author.tag}`, iconURL: message.author.displayAvatarURL() })
       .setTimestamp();
 
-    const gwMsg = await message.channel.send({ embeds: [embed] });
-    await gwMsg.react("🎉");
+    const row = new ActionRowBuilder().addComponents(
+      new ButtonBuilder()
+        .setCustomId(`giveaway_enter_${id}`)
+        .setLabel('Enter Giveaway 🎉')
+        .setStyle(ButtonStyle.Success),
+
+      new ButtonBuilder()
+        .setCustomId(`giveaway_leave_${id}`)
+        .setLabel('Leave Giveaway ❌')
+        .setStyle(ButtonStyle.Danger),
+    );
+
+    const gwMsg = await message.channel.send({ embeds: [embed], components: [row] });
 
     giveawayInfo[id] = {
       name,
