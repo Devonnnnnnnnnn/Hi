@@ -1,25 +1,57 @@
+const { EmbedBuilder } = require('discord.js');
+const styleInfo = require('../data/styleInfo.js');
+const abilityInfo = require('../data/abilityInfo.js');
+
 module.exports = {
   name: "info",
   aliases: ["information"],
   description: "Get style or ability key name only.",
   async execute(message, argsString) {
-    if (!argsString) return message.channel.send("❗ Usage: `!info <style/ability>`");
+    if (!argsString) 
+      return message.channel.send("❗ Usage: `!info <style/ability>`");
 
-    const q = argsString.toLowerCase();
+    const query = argsString.toLowerCase();
 
-    // Find style key (just exact or substring match)
-    const sk = Object.keys(require("../data/styleInfo.js")).find(
-      (key) => key.toLowerCase() === q || key.toLowerCase().includes(q)
-    );
+    // Find exact or substring matches for styles
+    const styleKeys = Object.keys(styleInfo);
+    const styleExact = styleKeys.find(k => k.toLowerCase() === query);
+    const stylePartial = styleKeys.filter(k => k.toLowerCase().includes(query));
 
-    // Find ability key
-    const ak = Object.keys(require("../data/abilityInfo.js")).find(
-      (key) => key.toLowerCase() === q || key.toLowerCase().includes(q)
-    );
+    // Find exact or substring matches for abilities
+    const abilityKeys = Object.keys(abilityInfo);
+    const abilityExact = abilityKeys.find(k => k.toLowerCase() === query);
+    const abilityPartial = abilityKeys.filter(k => k.toLowerCase().includes(query));
 
-    if (sk) return message.channel.send(`📝 Style: ${sk}`);
-    if (ak) return message.channel.send(`📝 Ability: ${ak}`);
+    const embed = new EmbedBuilder()
+      .setColor('#0099ff')
+      .setTitle('🔍 Info Lookup')
+      .setTimestamp();
 
-    return message.channel.send("❌ No matching style or ability.");
+    if (styleExact) {
+      embed.setDescription(`📝 **Style:** \`${styleExact}\``);
+      return message.channel.send({ embeds: [embed] });
+    }
+
+    if (abilityExact) {
+      embed.setDescription(`📝 **Ability:** \`${abilityExact}\``);
+      return message.channel.send({ embeds: [embed] });
+    }
+
+    // No exact match — show partial matches or no result
+    if (stylePartial.length > 0 || abilityPartial.length > 0) {
+      let desc = '';
+      if (stylePartial.length > 0) {
+        desc += `🌀 **Style matches:**\n${stylePartial.map(s => `\`${s}\``).join(', ')}\n\n`;
+      }
+      if (abilityPartial.length > 0) {
+        desc += `⚡ **Ability matches:**\n${abilityPartial.map(a => `\`${a}\``).join(', ')}\n\n`;
+      }
+      embed.setDescription(desc.trim());
+      return message.channel.send({ embeds: [embed] });
+    }
+
+    // No matches found
+    embed.setDescription('❌ No matching style or ability found.');
+    return message.channel.send({ embeds: [embed] });
   },
 };
