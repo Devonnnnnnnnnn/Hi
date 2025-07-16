@@ -1,13 +1,6 @@
 const { EmbedBuilder } = require("discord.js");
 const fs = require("fs");
 const path = require("path");
-const usersPath = path.join(__dirname, "..", "data", "users.json");
-let usersData = {};
-try {
-  usersData = JSON.parse(fs.readFileSync(usersPath, "utf8"));
-} catch {
-  usersData = {};
-}
 
 const verifiedUsersPath = path.join(__dirname, "..", "data", "verifiedUsers.json");
 let verifiedUsers = {};
@@ -17,26 +10,32 @@ try {
   verifiedUsers = {};
 }
 
-const { syncUserXP } = require("../utils.js");
-
 module.exports = {
   name: "profile",
   description: "View profile.",
   async execute(message) {
     const target = message.mentions.users.first() || message.author;
+    const member = message.guild.members.cache.get(target.id);
 
     const roblox = verifiedUsers?.[target.id] ?? "Not verified";
 
-    const userXP = usersData[target.id] || 0;
-    const xpInfo = syncUserXP(userXP);
+    const createdAt = `<t:${Math.floor(target.createdTimestamp / 1000)}:f>`;
+    const joinedAt = member
+      ? `<t:${Math.floor(member.joinedTimestamp / 1000)}:f>`
+      : "Not in this server";
 
     const embed = new EmbedBuilder()
       .setAuthor({ name: target.tag, iconURL: target.displayAvatarURL() })
-      .setDescription(`🏆 XP: **${xpInfo.xp}**\n🆙 Level: **${xpInfo.level}**`)
+      .setThumbnail(target.displayAvatarURL())
       .addFields(
         { name: "Roblox", value: roblox, inline: true },
-        { name: "ID", value: target.id, inline: true }
-      );
+        { name: "Discord ID", value: target.id, inline: true },
+        { name: "Account Created", value: createdAt, inline: true },
+        { name: "Joined Server", value: joinedAt, inline: true },
+        { name: "Bot?", value: target.bot ? "Yes 🤖" : "No", inline: true }
+      )
+      .setColor(0x00AE86)
+      .setTimestamp();
 
     return message.channel.send({ embeds: [embed] });
   },
