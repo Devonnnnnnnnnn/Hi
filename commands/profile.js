@@ -15,18 +15,20 @@ module.exports = {
   description: "View profile.",
   async execute(message) {
     const target = message.mentions.users.first() || message.author;
-    const member = message.guild.members.cache.get(target.id);
+
+    // Check if guild exists (not a DM)
+    const member = message.guild ? message.guild.members.cache.get(target.id) : null;
 
     const roblox = verifiedUsers?.[target.id] ?? "Not verified";
 
     const createdAt = `<t:${Math.floor(target.createdTimestamp / 1000)}:f>`;
     const joinedAt = member
-      ? `<t:${Math.floor(member.joinedTimestamp / 1000)}:f>`
+      ? `<t:${Math.floor((member.joinedTimestamp ?? 0) / 1000)}:f>`
       : "Not in this server";
 
     const embed = new EmbedBuilder()
-      .setAuthor({ name: target.tag, iconURL: target.displayAvatarURL() })
-      .setThumbnail(target.displayAvatarURL())
+      .setAuthor({ name: target.tag, iconURL: target.displayAvatarURL({ dynamic: true }) })
+      .setThumbnail(target.displayAvatarURL({ dynamic: true }))
       .addFields(
         { name: "Roblox", value: roblox, inline: true },
         { name: "Discord ID", value: target.id, inline: true },
