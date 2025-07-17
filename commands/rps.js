@@ -10,17 +10,17 @@ const emojis = {
 module.exports = {
   name: "rps",
   description: "Play rock paper scissors.",
-async execute(message, args) {
-  const argsString = args.join(" ");
-  if (!argsString) {
-    return message.channel.send("❗ Usage: `!rps <rock|paper|scissors>`");
-  }
+  async execute(message, args) {
+    const argsString = args.join(" ").toLowerCase();
+    if (!argsString) {
+      return message.channel.send("❗ Usage: `!rps <rock|paper|scissors>`");
+    }
 
-  const userChoice = argsString.toLowerCase();
-  if (!choices.includes(userChoice)) {
-    return message.channel.send("❌ Invalid choice. Choose rock, paper, or scissors.");
-  }
+    if (!choices.includes(argsString)) {
+      return message.channel.send("❌ Invalid choice. Choose rock, paper, or scissors.");
+    }
 
+    const userChoice = argsString;
     const botChoice = choices[Math.floor(Math.random() * choices.length)];
 
     let result;
@@ -47,10 +47,6 @@ async execute(message, args) {
       .setTimestamp();
 
     const sentMsg = await message.channel.send({ embeds: [embed] });
-
-    // Optional: react with bot's choice emoji
     await sentMsg.react(emojis[botChoice]);
-
-    return null;
   },
 };
