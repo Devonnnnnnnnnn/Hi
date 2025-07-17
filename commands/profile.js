@@ -16,11 +16,11 @@ module.exports = {
   description: "View profile.",
   async execute(message) {
     const target = message.mentions.users.first() || message.author;
-
     const member = message.guild ? message.guild.members.cache.get(target.id) : null;
 
     const userData = users[target.id] || {};
     const roblox = userData.roblox ?? "Not verified";
+    const style = userData.style ?? "No style selected";
 
     const createdAt = `<t:${Math.floor(target.createdTimestamp / 1000)}:f>`;
     const joinedAt = member
@@ -32,6 +32,7 @@ module.exports = {
       .setThumbnail(target.displayAvatarURL({ dynamic: true }) )
       .addFields(
         { name: "Roblox", value: roblox, inline: true },
+        { name: "Style", value: style, inline: true },
         { name: "Discord ID", value: target.id, inline: true },
         { name: "Account Created", value: createdAt, inline: true },
         { name: "Joined Server", value: joinedAt, inline: true },
