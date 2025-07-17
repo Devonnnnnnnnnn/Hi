@@ -1,11 +1,11 @@
-const fs = require("fs");
+const fs = require("fs").promises;
 const path = require("path");
 
-const usersFilePath = path.join(__dirname, "..", "users.json"); // go up 1 level
+const usersFilePath = path.join(__dirname, "..", "users.json");
 
-function readUsers() {
+async function readUsers() {
   try {
-    const data = fs.readFileSync(usersFilePath, "utf8");
+    const data = await fs.readFile(usersFilePath, "utf8");
     return JSON.parse(data);
   } catch (error) {
     console.error("Failed to read users.json:", error);
@@ -13,9 +13,9 @@ function readUsers() {
   }
 }
 
-function saveUsers(usersData) {
+async function saveUsers(usersData) {
   try {
-    fs.writeFileSync(usersFilePath, JSON.stringify(usersData, null, 2), "utf8");
+    await fs.writeFile(usersFilePath, JSON.stringify(usersData, null, 2), "utf8");
   } catch (error) {
     console.error("Failed to write users.json:", error);
   }
