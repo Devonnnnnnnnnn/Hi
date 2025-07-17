@@ -17,8 +17,7 @@ module.exports = {
         category: "Styles & Gameplay 🎮",
         commands: [
           { name: "!info", desc: "Get info about a style or ability." },
-          { name: "!setstyle", desc: "Set your style." },
-          { name: "!start", desc: "Make a profile." },
+          { name: "!setstyle", desc: "Set your style." }
           { name: "!list", desc: "List all styles." },
         ],
       },
