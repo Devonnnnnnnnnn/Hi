@@ -2,12 +2,13 @@ const { EmbedBuilder } = require("discord.js");
 const fs = require("fs");
 const path = require("path");
 
-const verifiedUsersPath = path.join(__dirname, "..", "data", "verifiedUsers.json");
-let verifiedUsers = {};
+const usersFilePath = path.join(__dirname, "..", "data", "users.json");
+
+let users = {};
 try {
-  verifiedUsers = JSON.parse(fs.readFileSync(verifiedUsersPath, "utf8"));
+  users = JSON.parse(fs.readFileSync(usersFilePath, "utf8"));
 } catch {
-  verifiedUsers = {};
+  users = {};
 }
 
 module.exports = {
@@ -16,10 +17,10 @@ module.exports = {
   async execute(message) {
     const target = message.mentions.users.first() || message.author;
 
-    // Check if guild exists (not a DM)
     const member = message.guild ? message.guild.members.cache.get(target.id) : null;
 
-    const roblox = verifiedUsers?.[target.id] ?? "Not verified";
+    const userData = users[target.id] || {};
+    const roblox = userData.roblox ?? "Not verified";
 
     const createdAt = `<t:${Math.floor(target.createdTimestamp / 1000)}:f>`;
     const joinedAt = member
@@ -28,7 +29,7 @@ module.exports = {
 
     const embed = new EmbedBuilder()
       .setAuthor({ name: target.tag, iconURL: target.displayAvatarURL({ dynamic: true }) })
-      .setThumbnail(target.displayAvatarURL({ dynamic: true }))
+      .setThumbnail(target.displayAvatarURL({ dynamic: true }) )
       .addFields(
         { name: "Roblox", value: roblox, inline: true },
         { name: "Discord ID", value: target.id, inline: true },
