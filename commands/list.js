@@ -1,30 +1,56 @@
 const { EmbedBuilder } = require("discord.js");
 const styleInfo = require("../data/styleInfo.js");
-const abilityInfo = require("../data/abilityInfo.js"); // your abilities data
+const abilityInfo = require("../data/abilityInfo.js");
+
+function chunkArray(arr, maxLen) {
+  const chunks = [];
+  let current = [];
+  let currentLength = 0;
+
+  for (const item of arr) {
+    const itemLen = item.length + 2; // account for ", "
+    if (currentLength + itemLen > maxLen) {
+      chunks.push(current);
+      current = [];
+      currentLength = 0;
+    }
+    current.push(item);
+    currentLength += itemLen;
+  }
+  if (current.length) chunks.push(current);
+  return chunks;
+}
 
 module.exports = {
   name: "list",
   description: "List all styles and abilities.",
   async execute(message) {
-    const styles = Object.keys(styleInfo);    // original order
+    const styles = Object.keys(styleInfo);
     const abilities = Object.keys(abilityInfo);
 
-    // Create one embed with two fields
     const embed = new EmbedBuilder()
       .setColor(0x0099ff)
-      .setTitle("📋 Styles and Abilities List")
-      .addFields(
-        {
-          name: "🎯 Styles",
-          value: styles.join(", ") || "No styles available.",
-          inline: false,
-        },
-        {
-          name: "⚡ Abilities",
-          value: abilities.join(", ") || "No abilities available.",
-          inline: false,
-        }
-      );
+      .setTitle("📋 Styles and Abilities List");
+
+    // Chunk styles if too long
+    const styleChunks = chunkArray(styles, 1000); // keep under 1024 limit
+    for (let i = 0; i < styleChunks.length; i++) {
+      embed.addFields({
+        name: i === 0 ? "🎯 Styles" : `🎯 Styles (cont. ${i})`,
+        value: styleChunks[i].map(s => `\`${s}\``).join(", "),
+        inline: false,
+      });
+    }
+
+    // Chunk abilities if too long
+    const abilityChunks = chunkArray(abilities, 1000);
+    for (let i = 0; i < abilityChunks.length; i++) {
+      embed.addFields({
+        name: i === 0 ? "⚡ Abilities" : `⚡ Abilities (cont. ${i})`,
+        value: abilityChunks[i].map(a => `\`${a}\``).join(", "),
+        inline: false,
+      });
+    }
 
     await message.channel.send({ embeds: [embed] });
   },
