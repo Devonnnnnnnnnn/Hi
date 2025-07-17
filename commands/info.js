@@ -5,43 +5,53 @@ const abilityInfo = require('../data/abilityInfo.js');
 module.exports = {
   name: "info",
   aliases: ["information"],
-  description: "Get the key name of a style or ability using partial or full input.",
-  
+  description: "Get full info about a style or ability by name.",
+
   async execute(message, args, adminIDs) {
-    // Normalize input: join array or convert to string
     const query = Array.isArray(args) ? args.join(" ").trim().toLowerCase() : String(args).trim().toLowerCase();
 
     if (!query)
       return message.channel.send("❗ Usage: `!info <style/ability>`");
 
-    // Search for style matches
+    // Search for exact and partial matches
     const styleKeys = Object.keys(styleInfo);
     const styleExact = styleKeys.find(k => k.toLowerCase() === query);
     const stylePartial = styleKeys.filter(k => k.toLowerCase().includes(query));
 
-    // Search for ability matches
     const abilityKeys = Object.keys(abilityInfo);
     const abilityExact = abilityKeys.find(k => k.toLowerCase() === query);
     const abilityPartial = abilityKeys.filter(k => k.toLowerCase().includes(query));
 
-    // Create base embed
     const embed = new EmbedBuilder()
       .setColor('#0099ff')
       .setTitle('🔍 Info Lookup')
       .setTimestamp();
 
-    // Exact match output
+    // Exact match: Style
     if (styleExact) {
-      embed.setDescription(`📝 **Style:** \`${styleExact}\``);
+      const data = styleInfo[styleExact];
+      const valueText = typeof data === 'object'
+        ? JSON.stringify(data, null, 2)
+        : String(data);
+
+      embed.setTitle(`🌀 Style: ${styleExact}`);
+      embed.setDescription(`\`\`\`json\n${valueText}\n\`\`\``);
       return message.channel.send({ embeds: [embed] });
     }
 
+    // Exact match: Ability
     if (abilityExact) {
-      embed.setDescription(`📝 **Ability:** \`${abilityExact}\``);
+      const data = abilityInfo[abilityExact];
+      const valueText = typeof data === 'object'
+        ? JSON.stringify(data, null, 2)
+        : String(data);
+
+      embed.setTitle(`⚡ Ability: ${abilityExact}`);
+      embed.setDescription(`\`\`\`json\n${valueText}\n\`\`\``);
       return message.channel.send({ embeds: [embed] });
     }
 
-    // Partial match output
+    // Partial matches
     if (stylePartial.length > 0 || abilityPartial.length > 0) {
       let desc = '';
 
