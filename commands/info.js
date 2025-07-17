@@ -10,10 +10,11 @@ module.exports = {
   async execute(message, args) {
     const query = Array.isArray(args)
       ? args.join(" ").trim().toLowerCase()
-      : String(args).trim().toLowerCase();
+      : String(args || "").trim().toLowerCase();
 
-    if (!query)
+    if (!query) {
       return message.channel.send("❗ Usage: `!info <style/ability>`");
+    }
 
     const styleKeys = Object.keys(styleInfo);
     const abilityKeys = Object.keys(abilityInfo);
@@ -30,26 +31,20 @@ module.exports = {
 
     if (styleExact) {
       const description = styleInfo[styleExact];
-
       embed
         .setTitle(`🌀 Style: ${styleExact}`)
-        .setDescription(description.length > 2048
-          ? description.slice(0, 2045) + "..."
-          : description);
+        .setDescription(description.length > 2048 ? description.slice(0, 2045) + "..." : description);
 
       return message.channel.send({ embeds: [embed] });
     }
 
     if (abilityExact) {
-      // Assuming abilityInfo has structured info, do similar fancy embed as before,
-      // or just fallback to simple description here.
-      const description = abilityInfo[abilityExact].description || "No description available.";
+      const ability = abilityInfo[abilityExact];
+      const description = ability.description || "No description available.";
 
       embed
         .setTitle(`⚡ Ability: ${abilityExact}`)
-        .setDescription(description.length > 2048
-          ? description.slice(0, 2045) + "..."
-          : description);
+        .setDescription(description.length > 2048 ? description.slice(0, 2045) + "..." : description);
 
       return message.channel.send({ embeds: [embed] });
     }
