@@ -35,21 +35,25 @@ module.exports = {
     // Chunk styles if too long
     const styleChunks = chunkArray(styles, 1000); // keep under 1024 limit
     for (let i = 0; i < styleChunks.length; i++) {
-      embed.addFields({
-        name: i === 0 ? "🎯 Styles" : `🎯 Styles (cont. ${i})`,
-        value: styleChunks[i].join(", ")
-        inline: false,
-      });
+      embed.addFields([
+        {
+          name: i === 0 ? "🎯 Styles" : `🎯 Styles (cont. ${i})`,
+          value: styleChunks[i].join(", "),
+          inline: false,
+        },
+      ]);
     }
 
     // Chunk abilities if too long
     const abilityChunks = chunkArray(abilities, 1000);
     for (let i = 0; i < abilityChunks.length; i++) {
-      embed.addFields({
-        name: i === 0 ? "⚡ Abilities" : `⚡ Abilities (cont. ${i})`,
-        value: abilityChunks[i].join(", ")
-        inline: false,
-      });
+      embed.addFields([
+        {
+          name: i === 0 ? "⚡ Abilities" : `⚡ Abilities (cont. ${i})`,
+          value: abilityChunks[i].join(", "),
+          inline: false,
+        },
+      ]);
     }
 
     await message.channel.send({ embeds: [embed] });
