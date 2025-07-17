@@ -6,8 +6,8 @@ if (fs.existsSync(giveawayPath)) {
   giveawayInfo = JSON.parse(fs.readFileSync(giveawayPath, 'utf-8'));
 }
 
-function saveGiveaways() {
-  fs.writeFileSync(giveawayPath, JSON.stringify(giveawayInfo, null, 2));
+async function saveGiveaways() {
+  await fs.promises.writeFile(giveawayPath, JSON.stringify(giveawayInfo, null, 2));
 }
 
 module.exports = {
@@ -26,13 +26,17 @@ module.exports = {
       return interaction.reply({ content: '❌ Giveaway not found or expired.', ephemeral: true });
     }
 
+    if (!Array.isArray(giveaway.participants)) {
+      giveaway.participants = [];
+    }
+
     if (action === 'enter') {
       if (giveaway.participants.includes(interaction.user.id)) {
         return interaction.reply({ content: '⚠️ You have already entered this giveaway.', ephemeral: true });
       }
 
       giveaway.participants.push(interaction.user.id);
-      saveGiveaways();
+      await saveGiveaways();
 
       return interaction.reply({ content: `🎉 You have entered the giveaway: **${giveaway.name}**! Good luck!`, ephemeral: true });
     }
@@ -43,7 +47,7 @@ module.exports = {
       }
 
       giveaway.participants = giveaway.participants.filter(id => id !== interaction.user.id);
-      saveGiveaways();
+      await saveGiveaways();
 
       return interaction.reply({ content: `❌ You have left the giveaway: **${giveaway.name}**.`, ephemeral: true });
     }
