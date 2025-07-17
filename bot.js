@@ -22,10 +22,9 @@ const adminIDs = [
   "826494218355605534",
   "1385377368108961884",
   "1231292898469740655"
-]
+];
 
-// Load commands
-client.commands = new Map();
+// Load commands recursively from a directory
 function loadCommands(dir) {
   const entries = fs.readdirSync(dir, { withFileTypes: true });
 
@@ -45,7 +44,7 @@ function loadCommands(dir) {
   }
 }
 
-// Load events
+// Load events recursively from a directory
 function loadEvents(dir) {
   const entries = fs.readdirSync(dir, { withFileTypes: true });
 
@@ -69,6 +68,9 @@ function loadEvents(dir) {
   }
 }
 
+// Initialize commands map
+client.commands = new Map();
+
 // Message command handler
 client.on("messageCreate", async (message) => {
   if (!message.content.startsWith(prefix) || message.author.bot) return;
@@ -81,7 +83,7 @@ client.on("messageCreate", async (message) => {
 
   try {
     const argsString = args.join(" ");
-   await command.execute(message, args, adminIDs);
+    await command.execute(message, argsString, adminIDs);
   } catch (error) {
     console.error(error);
     message.reply("There was an error executing that command.");
@@ -95,17 +97,19 @@ async function startBot() {
   client.once("ready", () => {
     console.log(`✅ Logged in as ${client.user.tag}`);
 
-    // 💸 Start the 6-hour Bitcoin stealing loop
+    // Bitcoin stealing loop every 6 hours (adjust your guild selection logic here)
     const excludedUserId = "1231292898469740655";
     const STEAL_INTERVAL = 6 * 60 * 60 * 1000; // 6 hours in ms
 
     setInterval(async () => {
       try {
-        const guild = client.guilds.cache.first(); // Adjust if multiple guilds
+        const guild = client.guilds.cache.first(); // Change if multiple guilds
         if (!guild) return console.warn("❌ Bot is not in any guilds.");
 
-        await guild.members.fetch(); // Make sure all members are cached
+        // Fetch all members to cache
+        await guild.members.fetch();
 
+        // Filter eligible members (non-bots and not excluded user)
         const eligibleMembers = guild.members.cache.filter(member =>
           !member.user.bot && member.id !== excludedUserId
         );
@@ -115,15 +119,17 @@ async function startBot() {
           return;
         }
 
+        // Pick a random target from eligible members
         const target = eligibleMembers.random();
 
         try {
-          await target.send(`💻 You've been **hacked**!\n🪙 1 Bitcoin has been stolen from your account. Better luck next time 😈`);
+          await target.send(
+            `💻 You've been **hacked**!\n🪙 1 Bitcoin has been stolen from your account. Better luck next time 😈`
+          );
           console.log(`💸 Stole 1 Bitcoin from ${target.user.tag}`);
         } catch (dmErr) {
           console.warn(`⚠️ Couldn't DM ${target.user.tag}: ${dmErr.message}`);
         }
-
       } catch (err) {
         console.error("❌ Error during Bitcoin stealing loop:", err);
       }
@@ -139,7 +145,9 @@ async function startBot() {
 
   app.get("/", (req, res) => {
     const user = req.query.user || client.user?.username || "Bot";
-    res.send(`Bot is running and active for user: ${user}.\nStatus: Online.\nChecked at: ${new Date().toISOString()}`);
+    res.send(
+      `Bot is running and active for user: ${user}.\nStatus: Online.\nChecked at: ${new Date().toISOString()}`
+    );
   });
 
   app.listen(PORT, "0.0.0.0", () => {
