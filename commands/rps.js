@@ -10,10 +10,10 @@ const emojis = {
 module.exports = {
   name: "rps",
   description: "Play rock paper scissors.",
-  async execute(message, argsString) {
-    if (!argsString) {
-      return message.channel.send("❗ Usage: `!rps <rock|paper|scissors>`");
-    }
+ async execute(message, argsString, adminIDs) {
+  if (!argsString) {
+    return message.channel.send("❗ Usage: `!rps <rock|paper|scissors>`");
+  }
 
     const userChoice = argsString.toLowerCase();
     if (!choices.includes(userChoice)) {
