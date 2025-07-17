@@ -56,6 +56,11 @@ module.exports = {
       embed.addFields({ name: cat.category, value });
     }
 
-    await message.channel.send({ embeds: [embed] });
+    try {
+      await message.channel.send({ embeds: [embed] });
+    } catch (error) {
+      console.error('Error sending help message:', error);
+      await message.channel.send("❌ Sorry, I couldn't send the help message.");
+    }
   },
 };
