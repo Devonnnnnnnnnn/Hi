@@ -10,15 +10,16 @@ const emojis = {
 module.exports = {
   name: "rps",
   description: "Play rock paper scissors.",
- async execute(message, argsString, adminIDs) {
+async execute(message, args) {
+  const argsString = args.join(" ");
   if (!argsString) {
     return message.channel.send("❗ Usage: `!rps <rock|paper|scissors>`");
   }
 
-    const userChoice = argsString.toLowerCase();
-    if (!choices.includes(userChoice)) {
-      return message.channel.send("❌ Invalid choice. Choose rock, paper, or scissors.");
-    }
+  const userChoice = argsString.toLowerCase();
+  if (!choices.includes(userChoice)) {
+    return message.channel.send("❌ Invalid choice. Choose rock, paper, or scissors.");
+  }
 
     const botChoice = choices[Math.floor(Math.random() * choices.length)];
 
