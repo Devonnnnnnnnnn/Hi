@@ -40,7 +40,7 @@ module.exports = {
 
     if (abilityExact) {
       const ability = abilityInfo[abilityExact];
-      const description = ability.description || "No description available.";
+      const description = abilityInfo[abilityExact] || "No description available.";
 
       embed
         .setTitle(`⚡ Ability: ${abilityExact}`)
