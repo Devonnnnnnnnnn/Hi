@@ -7,7 +7,7 @@ module.exports = {
   aliases: ["information"],
   description: "Get full info about a style or ability by name.",
 
-  async execute(message, args, adminIDs) {
+  async execute(message, args) {
     const query = Array.isArray(args)
       ? args.join(" ").trim().toLowerCase()
       : String(args).trim().toLowerCase();
@@ -15,40 +15,47 @@ module.exports = {
     if (!query)
       return message.channel.send("❗ Usage: `!info <style/ability>`");
 
-    // Search for exact and partial matches
     const styleKeys = Object.keys(styleInfo);
-    const styleExact = styleKeys.find(k => k.toLowerCase() === query);
-    const stylePartial = styleKeys.filter(k => k.toLowerCase().includes(query));
-
     const abilityKeys = Object.keys(abilityInfo);
+
+    const styleExact = styleKeys.find(k => k.toLowerCase() === query);
     const abilityExact = abilityKeys.find(k => k.toLowerCase() === query);
+
+    const stylePartial = styleKeys.filter(k => k.toLowerCase().includes(query));
     const abilityPartial = abilityKeys.filter(k => k.toLowerCase().includes(query));
 
     const embed = new EmbedBuilder()
-      .setColor('#0099ff')
+      .setColor('#5865F2') // Discord blurple color
       .setTimestamp();
 
-    // Exact match: Style
     if (styleExact) {
       const data = styleInfo[styleExact];
 
       embed.setTitle(`🌀 Style: ${styleExact}`);
 
-      if (data.description) embed.setDescription(data.description);
+      // Description
+      embed.setDescription(data.description || "No description available.");
 
-      // If stats present, add them in a neat field
+      // Stats section (human-friendly)
       if (data.stats && typeof data.stats === 'object') {
-        const statsText = Object.entries(data.stats)
-          .map(([key, val]) => `**${key.charAt(0).toUpperCase() + key.slice(1)}:** ${val}`)
-          .join('\n');
-        embed.addFields({ name: 'Stats', value: statsText, inline: true });
+        let statsText = '';
+        for (const [stat, val] of Object.entries(data.stats)) {
+          // add a little emoji flair by stat name
+          let emoji = '⚙️'; // generic gear emoji fallback
+          if (stat.toLowerCase().includes('speed')) emoji = '💨';
+          else if (stat.toLowerCase().includes('power')) emoji = '💪';
+          else if (stat.toLowerCase().includes('technique')) emoji = '🎯';
+
+          statsText += `${emoji} **${stat.charAt(0).toUpperCase() + stat.slice(1)}:** ${val}\n`;
+        }
+        embed.addFields({ name: 'Stats', value: statsText, inline: false });
       }
 
-      // If abilities array present, list them
+      // Abilities as bullet points
       if (Array.isArray(data.abilities) && data.abilities.length > 0) {
         embed.addFields({
           name: 'Abilities',
-          value: data.abilities.map(a => `• ${a}`).join('\n'),
+          value: data.abilities.map(ability => `• ${ability}`).join('\n'),
           inline: false,
         });
       }
@@ -56,38 +63,32 @@ module.exports = {
       return message.channel.send({ embeds: [embed] });
     }
 
-    // Exact match: Ability
     if (abilityExact) {
       const data = abilityInfo[abilityExact];
 
       embed.setTitle(`⚡ Ability: ${abilityExact}`);
 
-      if (data.description) embed.setDescription(data.description);
+      embed.setDescription(data.description || "No description available.");
 
-      // Show cooldown or other fields if available
       if (data.cooldown) {
-        embed.addFields({ name: 'Cooldown', value: data.cooldown, inline: true });
+        embed.addFields({ name: 'Cooldown ⏳', value: data.cooldown, inline: true });
       }
 
       if (data.effect) {
-        embed.addFields({ name: 'Effect', value: data.effect, inline: false });
+        embed.addFields({ name: 'Effect ✨', value: data.effect, inline: false });
       }
 
-      // Add any other keys (except description, cooldown, effect) as additional fields
-      for (const [key, value] of Object.entries(data)) {
-        if (!['description', 'cooldown', 'effect'].includes(key) && value) {
-          embed.addFields({
-            name: key.charAt(0).toUpperCase() + key.slice(1),
-            value: String(value),
-            inline: true,
-          });
+      // Show any other relevant fields nicely (excluding those above)
+      for (const [key, val] of Object.entries(data)) {
+        if (!['description', 'cooldown', 'effect'].includes(key) && val) {
+          const title = key.charAt(0).toUpperCase() + key.slice(1);
+          embed.addFields({ name: title, value: String(val), inline: true });
         }
       }
 
       return message.channel.send({ embeds: [embed] });
     }
 
-    // Partial matches
     if (stylePartial.length > 0 || abilityPartial.length > 0) {
       let desc = '';
 
@@ -99,14 +100,17 @@ module.exports = {
         desc += `⚡ **Ability matches:**\n${abilityPartial.map(a => `\`${a}\``).join(', ')}\n\n`;
       }
 
-      embed.setTitle('🔍 Partial matches found');
-      embed.setDescription(desc.trim());
+      embed
+        .setTitle('🔍 Partial matches found')
+        .setDescription(desc.trim());
+
       return message.channel.send({ embeds: [embed] });
     }
 
-    // No matches
-    embed.setTitle('❌ No matches found');
-    embed.setDescription('No matching style or ability found.');
+    embed
+      .setTitle('❌ No matches found')
+      .setDescription('No matching style or ability found.');
+
     return message.channel.send({ embeds: [embed] });
   },
 };
