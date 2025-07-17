@@ -5,28 +5,32 @@ const abilityInfo = require('../data/abilityInfo.js');
 module.exports = {
   name: "info",
   aliases: ["information"],
-  description: "Get style or ability key name only.",
-  async execute(message, argsString) {
-    if (!argsString) 
+  description: "Get the key name of a style or ability using partial or full input.",
+  
+  async execute(message, args, adminIDs) {
+    // Normalize input: join array or convert to string
+    const query = Array.isArray(args) ? args.join(" ").trim().toLowerCase() : String(args).trim().toLowerCase();
+
+    if (!query)
       return message.channel.send("❗ Usage: `!info <style/ability>`");
 
-    const query = argsString.toLowerCase();
-
-    // Find exact or substring matches for styles
+    // Search for style matches
     const styleKeys = Object.keys(styleInfo);
     const styleExact = styleKeys.find(k => k.toLowerCase() === query);
     const stylePartial = styleKeys.filter(k => k.toLowerCase().includes(query));
 
-    // Find exact or substring matches for abilities
+    // Search for ability matches
     const abilityKeys = Object.keys(abilityInfo);
     const abilityExact = abilityKeys.find(k => k.toLowerCase() === query);
     const abilityPartial = abilityKeys.filter(k => k.toLowerCase().includes(query));
 
+    // Create base embed
     const embed = new EmbedBuilder()
       .setColor('#0099ff')
       .setTitle('🔍 Info Lookup')
       .setTimestamp();
 
+    // Exact match output
     if (styleExact) {
       embed.setDescription(`📝 **Style:** \`${styleExact}\``);
       return message.channel.send({ embeds: [embed] });
@@ -37,20 +41,23 @@ module.exports = {
       return message.channel.send({ embeds: [embed] });
     }
 
-    // No exact match — show partial matches or no result
+    // Partial match output
     if (stylePartial.length > 0 || abilityPartial.length > 0) {
       let desc = '';
+
       if (stylePartial.length > 0) {
         desc += `🌀 **Style matches:**\n${stylePartial.map(s => `\`${s}\``).join(', ')}\n\n`;
       }
+
       if (abilityPartial.length > 0) {
         desc += `⚡ **Ability matches:**\n${abilityPartial.map(a => `\`${a}\``).join(', ')}\n\n`;
       }
+
       embed.setDescription(desc.trim());
       return message.channel.send({ embeds: [embed] });
     }
 
-    // No matches found
+    // No matches
     embed.setDescription('❌ No matching style or ability found.');
     return message.channel.send({ embeds: [embed] });
   },
