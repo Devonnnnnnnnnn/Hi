@@ -1,7 +1,7 @@
 module.exports = {
   name: "messageCreate",
   async execute(message) {
-    if (message.author.bot) return; // Ignore bots
+    if (message.author.bot) return;
 
     const content = message.content;
 
@@ -11,21 +11,23 @@ module.exports = {
       const containsProfanity = containsProfanityText === "true";
 
       if (containsProfanity) {
-        // Try to delete the message
         try {
           await message.delete();
+          console.log(`Deleted message from ${message.author.tag}: "${content}"`);
         } catch (err) {
           console.error("Failed to delete message:", err);
         }
 
-        // DM the user a warning
-        try {
-          await message.author.send(
-            "⚠️ Your message contained inappropriate language and was deleted. Please watch your language."
-          );
-        } catch (err) {
-          console.error("Failed to send DM to user:", err);
-        }
+        // Delay DM slightly
+        setTimeout(async () => {
+          try {
+            await message.author.send(
+              "⚠️ Your message contained inappropriate language and was deleted. Please watch your language."
+            );
+          } catch (err) {
+            console.error("Failed to send DM to user:", err);
+          }
+        }, 1000);
       }
     } catch (err) {
       console.error("Error checking profanity:", err);
