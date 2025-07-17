@@ -2,7 +2,7 @@ const fs = require('fs');
 const { DateTime } = require('luxon');
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 
-const giveawayPath = './giveaways.json';
+const giveawayPath = './json/giveawayData.json';
 let giveawayInfo = {};
 
 // Load giveaways from file on start
