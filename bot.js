@@ -80,7 +80,7 @@ client.on("messageCreate", async (message) => {
   if (!command) return;
 
   try {
-await command.execute(message, args, adminIDs);
+  await command.execute(message, args.join(" "), adminIDs);
   } catch (error) {
     console.error(error);
     message.reply("There was an error executing that command.");
