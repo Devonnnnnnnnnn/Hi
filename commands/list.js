@@ -1,5 +1,7 @@
 const { EmbedBuilder } = require("discord.js");
 const styleInfo = require("../data/styleInfo.js");
+console.log("Total styles:", Object.keys(styleInfo).length);
+console.log(Object.keys(styleInfo)); 
 
 const MAX_FIELD_LENGTH = 1024; // Discord max field value length
 const MAX_EMBED_FIELDS = 25; // Discord max fields per embed
