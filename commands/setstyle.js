@@ -1,17 +1,19 @@
-const fs = require("fs");
+const fs = require("fs").promises;
 const path = require("path");
 const { EmbedBuilder } = require("discord.js");
-const styleStats = require("../data/styleInfo.js"); // Import style definitions
+const styleStats = require("../data/styleInfo.js");
 
 const userStylesPath = path.join(__dirname, "..", "data", "userStyles.json");
 
-// Load user styles from file, or initialize empty object
 let userStyles = {};
-try {
-  userStyles = JSON.parse(fs.readFileSync(userStylesPath, "utf8"));
-} catch {
-  userStyles = {};
-}
+(async () => {
+  try {
+    const data = await fs.readFile(userStylesPath, "utf8");
+    userStyles = JSON.parse(data);
+  } catch {
+    userStyles = {};
+  }
+})();
 
 module.exports = {
   name: "setstyle",
@@ -29,9 +31,9 @@ module.exports = {
       });
     }
 
-    const input = argsString.toLowerCase();
-    // Find a style key case-insensitive
+    const input = argsString.trim().toLowerCase();
     const key = Object.keys(styleStats).find(k => k.toLowerCase() === input);
+
     if (!key) {
       return message.channel.send({
         embeds: [
@@ -40,18 +42,19 @@ module.exports = {
             .setTitle("Style Not Found")
             .setDescription(
               `❌ Style "**${argsString}**" not found.\n` +
-              `Available styles:\n` +
-              Object.keys(styleStats).map(s => `\`${s}\``).join(", ")
+                `Available styles:\n` +
+                Object.keys(styleStats)
+                  .map(s => `\`${s}\``)
+                  .join(", ")
             )
             .setTimestamp(),
         ],
       });
     }
 
-    // Save user's style choice
     userStyles[message.author.id] = key;
     try {
-      fs.writeFileSync(userStylesPath, JSON.stringify(userStyles, null, 2));
+      await fs.writeFile(userStylesPath, JSON.stringify(userStyles, null, 2));
     } catch (err) {
       console.error("Failed to save user styles:", err);
       return message.channel.send({
