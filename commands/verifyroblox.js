@@ -1,14 +1,19 @@
-const fs = require("fs");
+const fs = require("fs").promises;
 const path = require("path");
 const { EmbedBuilder } = require("discord.js");
 
-const verifiedUsersPath = path.join(__dirname, "..", "data", "verifiedUsers.json");
-let verifiedUsers = {};
-try {
-  verifiedUsers = JSON.parse(fs.readFileSync(verifiedUsersPath, "utf8"));
-} catch {
-  verifiedUsers = {};
-}
+const usersPath = path.join(__dirname, "..", "data", "users.json");
+
+// Load users on startup
+let users = {};
+(async () => {
+  try {
+    const data = await fs.readFile(usersPath, "utf8");
+    users = JSON.parse(data);
+  } catch {
+    users = {};
+  }
+})();
 
 module.exports = {
   name: "verifyroblox",
@@ -74,11 +79,17 @@ module.exports = {
       });
     }
 
-    verifiedUsers[message.author.id] = username;
+    const userId = message.author.id;
+    if (!users[userId]) {
+      users[userId] = {};
+    }
+
+    users[userId].verified = username;
+
     try {
-      fs.writeFileSync(verifiedUsersPath, JSON.stringify(verifiedUsers, null, 2));
+      await fs.writeFile(usersPath, JSON.stringify(users, null, 2));
     } catch (err) {
-      console.error("Failed to save verified users:", err);
+      console.error("Failed to save users.json:", err);
       return message.channel.send({
         embeds: [
           new EmbedBuilder()
