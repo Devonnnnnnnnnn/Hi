@@ -14,14 +14,21 @@ module.exports = {
   name: "verifyroblox",
   description: "Verify via Roblox.",
   async execute(message, argsString) {
-    const [username] = argsString.split(" ").filter((s) => s);
+    if (!message.guild) {
+      return message.channel.send("❌ This command can only be used in a server.");
+    }
+
+    const [username] = argsString.trim().split(/\s+/);
     if (!username) {
-      const embed = new EmbedBuilder()
-        .setColor(0xff0000)
-        .setTitle("Usage Error")
-        .setDescription("❗ Usage: `!verifyroblox <username>`")
-        .setTimestamp();
-      return message.channel.send({ embeds: [embed] });
+      return message.channel.send({
+        embeds: [
+          new EmbedBuilder()
+            .setColor(0xff0000)
+            .setTitle("Usage Error")
+            .setDescription("❗ Usage: `!verifyroblox <username>`")
+            .setTimestamp(),
+        ],
+      });
     }
 
     const member = message.guild.members.cache.get(message.author.id);
@@ -29,21 +36,42 @@ module.exports = {
       (r) => r.name.toLowerCase() === "verified"
     );
     if (!verifiedRole) {
-      const embed = new EmbedBuilder()
-        .setColor(0xff0000)
-        .setTitle("Role Not Found")
-        .setDescription("❗ Verified role not found in this server.")
-        .setTimestamp();
-      return message.channel.send({ embeds: [embed] });
+      return message.channel.send({
+        embeds: [
+          new EmbedBuilder()
+            .setColor(0xff0000)
+            .setTitle("Role Not Found")
+            .setDescription("❗ Verified role not found in this server.")
+            .setTimestamp(),
+        ],
+      });
     }
 
     if (member.roles.cache.has(verifiedRole.id)) {
-      const embed = new EmbedBuilder()
-        .setColor(0x00ff00)
-        .setTitle("Already Verified")
-        .setDescription("✅ You’re already verified.")
-        .setTimestamp();
-      return message.channel.send({ embeds: [embed] });
+      return message.channel.send({
+        embeds: [
+          new EmbedBuilder()
+            .setColor(0x00ff00)
+            .setTitle("Already Verified")
+            .setDescription("✅ You’re already verified.")
+            .setTimestamp(),
+        ],
+      });
+    }
+
+    try {
+      await member.roles.add(verifiedRole);
+    } catch (err) {
+      console.error("Failed to assign role:", err);
+      return message.channel.send({
+        embeds: [
+          new EmbedBuilder()
+            .setColor(0xff0000)
+            .setTitle("Role Assignment Failed")
+            .setDescription("❌ Failed to assign the verified role. Please contact an admin.")
+            .setTimestamp(),
+        ],
+      });
     }
 
     verifiedUsers[message.author.id] = username;
@@ -51,30 +79,25 @@ module.exports = {
       fs.writeFileSync(verifiedUsersPath, JSON.stringify(verifiedUsers, null, 2));
     } catch (err) {
       console.error("Failed to save verified users:", err);
-      const embed = new EmbedBuilder()
-        .setColor(0xff0000)
-        .setTitle("Error")
-        .setDescription("❌ Failed to save verification. Please try again later.")
-        .setTimestamp();
-      return message.channel.send({ embeds: [embed] });
+      return message.channel.send({
+        embeds: [
+          new EmbedBuilder()
+            .setColor(0xff0000)
+            .setTitle("Error")
+            .setDescription("❌ Failed to save verification. Please try again later.")
+            .setTimestamp(),
+        ],
+      });
     }
 
-    try {
-      await member.roles.add(verifiedRole);
-      const embed = new EmbedBuilder()
-        .setColor(0x00ff00)
-        .setTitle("Verification Successful")
-        .setDescription(`✅ Verified as **${username}**.`)
-        .setTimestamp();
-      return message.channel.send({ embeds: [embed] });
-    } catch (err) {
-      console.error("Failed to assign role:", err);
-      const embed = new EmbedBuilder()
-        .setColor(0xff0000)
-        .setTitle("Role Assignment Failed")
-        .setDescription("❌ Failed to assign the verified role. Please contact an admin.")
-        .setTimestamp();
-      return message.channel.send({ embeds: [embed] });
-    }
+    return message.channel.send({
+      embeds: [
+        new EmbedBuilder()
+          .setColor(0x00ff00)
+          .setTitle("Verification Successful")
+          .setDescription(`✅ Verified as **${username}**.`)
+          .setTimestamp(),
+      ],
+    });
   },
 };
