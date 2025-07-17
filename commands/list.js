@@ -37,7 +37,7 @@ module.exports = {
     for (let i = 0; i < styleChunks.length; i++) {
       embed.addFields({
         name: i === 0 ? "🎯 Styles" : `🎯 Styles (cont. ${i})`,
-        value: styleChunks[i].map(s => `\`${s}\``).join(", "),
+        value: styleChunks[i].join(", ")
         inline: false,
       });
     }
@@ -47,7 +47,7 @@ module.exports = {
     for (let i = 0; i < abilityChunks.length; i++) {
       embed.addFields({
         name: i === 0 ? "⚡ Abilities" : `⚡ Abilities (cont. ${i})`,
-        value: abilityChunks[i].map(a => `\`${a}\``).join(", "),
+        value: abilityChunks[i].join(", ")
         inline: false,
       });
     }
