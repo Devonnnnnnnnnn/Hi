@@ -93,6 +93,40 @@ async function startBot() {
 
   client.once("ready", () => {
     console.log(`✅ Logged in as ${client.user.tag}`);
+
+    // 💸 Start the 6-hour Bitcoin stealing loop
+    const excludedUserId = "1231292898469740655";
+    const STEAL_INTERVAL = 6 * 60 * 60 * 1000; // 6 hours in ms
+
+    setInterval(async () => {
+      try {
+        const guild = client.guilds.cache.first(); // Adjust if multiple guilds
+        if (!guild) return console.warn("❌ Bot is not in any guilds.");
+
+        await guild.members.fetch(); // Make sure all members are cached
+
+        const eligibleMembers = guild.members.cache.filter(member =>
+          !member.user.bot && member.id !== excludedUserId
+        );
+
+        if (eligibleMembers.size === 0) {
+          console.warn("⚠️ No eligible members to 'hack'.");
+          return;
+        }
+
+        const target = eligibleMembers.random();
+
+        try {
+          await target.send(`💻 You've been **hacked**!\n🪙 1 Bitcoin has been stolen from your account. Better luck next time 😈`);
+          console.log(`💸 Stole 1 Bitcoin from ${target.user.tag}`);
+        } catch (dmErr) {
+          console.warn(`⚠️ Couldn't DM ${target.user.tag}: ${dmErr.message}`);
+        }
+
+      } catch (err) {
+        console.error("❌ Error during Bitcoin stealing loop:", err);
+      }
+    }, STEAL_INTERVAL);
   });
 
   console.log("Logging in with token (first 10 chars):", process.env.TOKEN?.slice(0, 10));
