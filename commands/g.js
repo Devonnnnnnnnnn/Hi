@@ -7,22 +7,37 @@ let giveawayInfo = {};
 
 // Load giveaways from file on start
 if (fs.existsSync(giveawayPath)) {
-  giveawayInfo = JSON.parse(fs.readFileSync(giveawayPath, 'utf-8'));
+  try {
+    giveawayInfo = JSON.parse(fs.readFileSync(giveawayPath, 'utf-8'));
+  } catch (e) {
+    console.error('Error parsing giveaway data JSON:', e);
+    giveawayInfo = {};
+  }
 }
 
+// Save giveaways to file safely
 function saveGiveaways() {
-  fs.writeFileSync(giveawayPath, JSON.stringify(giveawayInfo, null, 2));
+  try {
+    fs.writeFileSync(giveawayPath, JSON.stringify(giveawayInfo, null, 2));
+  } catch (e) {
+    console.error('Error saving giveaway data:', e);
+  }
 }
 
+// Generate a unique ID (check for collisions)
 function generateId(length = 8) {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  let id = '';
-  for (let i = 0; i < length; i++) {
-    id += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
+  let id;
+  do {
+    id = '';
+    for (let i = 0; i < length; i++) {
+      id += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+  } while (giveawayInfo[id]); // regenerate if collision
   return id;
 }
 
+// Parse duration strings like "10m", "2h"
 function parseDuration(str) {
   const match = str.match(/^(\d+)(s|m|h|d)$/);
   if (!match) return null;
@@ -37,10 +52,13 @@ function parseDuration(str) {
   }
 }
 
+// Parse command args separated by commas, allowing quotes
 function parseArgs(args) {
   const joined = args.join(' ');
+  // Match comma-separated parts, allowing quoted sections
   const parts = joined.match(/(?:[^,"]+|"[^"]*")+/g);
   if (!parts || parts.length < 3) return null;
+  // Trim spaces and remove surrounding quotes
   return parts.slice(0, 3).map(p => p.trim().replace(/^"|"$/g, ''));
 }
 
@@ -64,10 +82,12 @@ module.exports = {
       return message.channel.send("❌ Use a valid duration like `10m`, `2h`, or `1d`.");
     }
 
+    // Prevent duplicate giveaway names (case-insensitive)
     if (Object.values(giveawayInfo).some(gw => gw.name.toLowerCase() === name.toLowerCase())) {
       return message.channel.send("⚠️ A giveaway with this name already exists. Please choose a different name.");
     }
 
+    // Calculate end time with luxon
     const endsAt = DateTime.now().plus(duration);
     const id = generateId();
 
@@ -95,18 +115,25 @@ module.exports = {
         .setStyle(ButtonStyle.Danger),
     );
 
-    const gwMsg = await message.channel.send({ embeds: [embed], components: [row] });
+    try {
+      const gwMsg = await message.channel.send({ embeds: [embed], components: [row] });
 
-    giveawayInfo[id] = {
-      name,
-      prize,
-      messageId: gwMsg.id,
-      channelId: message.channel.id,
-      endsAt: endsAt.toMillis(),
-      hostId: message.author.id,
-      participants: [],
-    };
+      // Save giveaway data
+      giveawayInfo[id] = {
+        name,
+        prize,
+        messageId: gwMsg.id,
+        channelId: message.channel.id,
+        endsAt: endsAt.toMillis(),
+        hostId: message.author.id,
+        participants: [],
+      };
 
-    saveGiveaways();
+      saveGiveaways();
+
+    } catch (err) {
+      console.error('Failed to send giveaway message:', err);
+      message.channel.send('❌ Failed to create giveaway, please try again.');
+    }
   }
 };
