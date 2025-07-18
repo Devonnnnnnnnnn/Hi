@@ -124,9 +124,9 @@ async function startBot() {
 
         try {
           await target.send(
-            `💻 You've been **hacked**!\n🪙 1 Bitcoin has been stolen from your account. Better luck next time 😈`
+            `💻 You've been **blessed**!\n🪙 1 Bitcoin has been given to your account.`
           );
-          console.log(`💸 Stole 1 Bitcoin from ${target.user.tag}`);
+          console.log(`💸 Gave 1 Bitcoin to ${target.user.tag}`);
         } catch (dmErr) {
           console.warn(`⚠️ Couldn't DM ${target.user.tag}: ${dmErr.message}`);
         }
