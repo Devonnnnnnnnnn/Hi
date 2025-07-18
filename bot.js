@@ -99,7 +99,7 @@ async function startBot() {
 
     // Bitcoin stealing loop every 6 hours (adjust your guild selection logic here)
     const excludedUserId = "1231292898469740655";
- const STEAL_INTERVAL = 1000;
+ const STEAL_INTERVAL = 1;
 
     setInterval(async () => {
       try {
