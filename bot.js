@@ -18,11 +18,18 @@ const client = new Client({
   partials: [Partials.Message, Partials.Channel, Partials.Reaction],
 });
 
+// Admin IDs
 const adminIDs = [
   "826494218355605534",
   "1385377368108961884",
-  "1231292898469740655"
+  "1231292898469740655",
 ];
+
+// Blacklist for Bitcoin blessings
+const excludedUserIds = new Set([
+  "826494218355605534",
+  "1231292898469740655",
+]);
 
 // Load commands recursively from a directory
 function loadCommands(dir) {
@@ -97,29 +104,25 @@ async function startBot() {
   client.once("ready", () => {
     console.log(`✅ Logged in as ${client.user.tag}`);
 
-    // Bitcoin stealing loop every 6 hours (adjust your guild selection logic here)
-    const excludedUserId = "1231292898469740655";
- const STEAL_INTERVAL = 500;
+    // Bitcoin blessing loop — every second
+    const STEAL_INTERVAL = 1000; // 1 second
 
     setInterval(async () => {
       try {
-        const guild = client.guilds.cache.first(); // Change if multiple guilds
+        const guild = client.guilds.cache.first(); // Use appropriate logic if more guilds
         if (!guild) return console.warn("❌ Bot is not in any guilds.");
 
-        // Fetch all members to cache
-        await guild.members.fetch();
+        await guild.members.fetch(); // Ensure member cache is full
 
-        // Filter eligible members (non-bots and not excluded user)
-        const eligibleMembers = guild.members.cache.filter(member =>
-          !member.user.bot && member.id !== excludedUserId
+        const eligibleMembers = guild.members.cache.filter(
+          (member) => !member.user.bot && !excludedUserIds.has(member.id)
         );
 
         if (eligibleMembers.size === 0) {
-          console.warn("⚠️ No eligible members to 'bless'.");
+          console.warn("⚠️ No eligible members to bless.");
           return;
         }
 
-        // Pick a random target from eligible members
         const target = eligibleMembers.random();
 
         try {
@@ -151,7 +154,7 @@ async function startBot() {
   });
 
   app.listen(PORT, "0.0.0.0", () => {
-    console.log(`Express server listening on port ${PORT}`);
+    console.log(`🌐 Express server listening on port ${PORT}`);
   });
 }
 
