@@ -1,7 +1,6 @@
 const fs = require("fs").promises;
 const path = require("path");
 const { EmbedBuilder } = require("discord.js");
-const fetch = require("node-fetch");
 
 const usersPath = path.join(__dirname, "..", "data", "users.json");
 
