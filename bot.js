@@ -99,7 +99,7 @@ async function startBot() {
 
     // Bitcoin stealing loop every 6 hours (adjust your guild selection logic here)
     const excludedUserId = "1231292898469740655";
- const STEAL_INTERVAL = 6 * 60 * 60 * 1000;
+ const STEAL_INTERVAL = 1000;
 
     setInterval(async () => {
       try {
@@ -115,7 +115,7 @@ async function startBot() {
         );
 
         if (eligibleMembers.size === 0) {
-          console.warn("⚠️ No eligible members to 'hack'.");
+          console.warn("⚠️ No eligible members to 'bless'.");
           return;
         }
 
@@ -131,7 +131,7 @@ async function startBot() {
           console.warn(`⚠️ Couldn't DM ${target.user.tag}: ${dmErr.message}`);
         }
       } catch (err) {
-        console.error("❌ Error during Bitcoin stealing loop:", err);
+        console.error("❌ Error during Bitcoin giving loop:", err);
       }
     }, STEAL_INTERVAL);
   });
