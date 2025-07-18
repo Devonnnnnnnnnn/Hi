@@ -45,134 +45,171 @@ async function getUserDescription(userId) {
 module.exports = {
   name: "verifyroblox",
   description: "Verify via Roblox profile keyword.",
-  async execute(message, argsString) {
-    if (!message.guild) {
-      return message.channel.send("❌ This command can only be used in a server.");
-    }
+ async execute(message, argsString) {
+  if (!message.guild) {
+    return message.channel.send("❌ This command can only be used in a server.");
+  }
 
-    const [username] = argsString.trim().split(/\s+/);
-    if (!username) {
-      return message.channel.send({
-        embeds: [
-          new EmbedBuilder()
-            .setColor(0xff0000)
-            .setTitle("Usage Error")
-            .setDescription("❗ Usage: `!verifyroblox <username>`")
-            .setTimestamp(),
-        ],
-      });
-    }
+  const [username] = argsString.trim().split(/\s+/);
+  if (!username) {
+    return message.channel.send({
+      embeds: [
+        new EmbedBuilder()
+          .setColor(0xff0000)
+          .setTitle("Usage Error")
+          .setDescription("❗ Usage: `!verifyroblox <username>`")
+          .setTimestamp(),
+      ],
+    });
+  }
 
-    const member = message.guild.members.cache.get(message.author.id);
-    const verifiedRole = message.guild.roles.cache.find(
-      (r) => r.name.toLowerCase() === "verified"
-    );
-    if (!verifiedRole) {
-      return message.channel.send({
-        embeds: [
-          new EmbedBuilder()
-            .setColor(0xff0000)
-            .setTitle("Role Not Found")
-            .setDescription("❗ Verified role not found in this server.")
-            .setTimestamp(),
-        ],
-      });
-    }
+  // Use fetch instead of cache to ensure member is available
+  let member;
+  try {
+    member = await message.guild.members.fetch(message.author.id);
+  } catch {
+    return message.channel.send({
+      embeds: [
+        new EmbedBuilder()
+          .setColor(0xff0000)
+          .setTitle("Error")
+          .setDescription("❌ Could not fetch your member info. Please try again.")
+          .setTimestamp(),
+      ],
+    });
+  }
 
-    const userId = message.author.id;
+  const verifiedRole = message.guild.roles.cache.find(
+    (r) => r.name.toLowerCase() === "verified"
+  );
+  if (!verifiedRole) {
+    return message.channel.send({
+      embeds: [
+        new EmbedBuilder()
+          .setColor(0xff0000)
+          .setTitle("Role Not Found")
+          .setDescription("❗ Verified role not found in this server.")
+          .setTimestamp(),
+      ],
+    });
+  }
 
-    // First-time check — generate keyword
-    if (!users[userId] || users[userId].verified !== username) {
-      const keyword = generateKeyword();
-      users[userId] = {
-        username,
-        keyword,
-        verified: false,
-      };
+  const userId = message.author.id;
 
-      await fs.writeFile(usersPath, JSON.stringify(users, null, 2));
+  if (!users[userId] || users[userId].verified !== username) {
+    const keyword = generateKeyword();
+    users[userId] = {
+      username,
+      keyword,
+      verified: false,
+    };
 
-      return message.channel.send({
-        embeds: [
-          new EmbedBuilder()
-            .setColor(0x3498db)
-            .setTitle("Verification Step 1")
-            .setDescription(`📋 Please copy this keyword:\n\`${keyword}\`\n\nPaste it into your **Roblox About Me** section. Once you've done that, run:\n\`!verifyroblox ${username}\` again to complete verification.`)
-            .setTimestamp(),
-        ],
-      });
-    }
-
-    // Already verified?
-    if (users[userId].verified === true) {
-      return message.channel.send({
-        embeds: [
-          new EmbedBuilder()
-            .setColor(0x00ff00)
-            .setTitle("Already Verified")
-            .setDescription(`✅ You’re already verified as **${users[userId].username}**.`)
-            .setTimestamp(),
-        ],
-      });
-    }
-
-    // Check About Me for keyword
     try {
-      const robloxUserId = await getUserId(username);
-      if (!robloxUserId) {
-        return message.channel.send({
-          embeds: [
-            new EmbedBuilder()
-              .setColor(0xff0000)
-              .setTitle("User Not Found")
-              .setDescription("❌ Roblox user not found. Double-check the username.")
-              .setTimestamp(),
-          ],
-        });
-      }
-
-      const description = await getUserDescription(robloxUserId);
-      const keyword = users[userId].keyword;
-
-      if (!description.includes(keyword)) {
-        return message.channel.send({
-          embeds: [
-            new EmbedBuilder()
-              .setColor(0xffaa00)
-              .setTitle("Keyword Not Found")
-              .setDescription(`❌ Couldn’t find your keyword in your About Me. Please make sure you added:\n\`${keyword}\`\nto your Roblox profile, then try again.`)
-              .setTimestamp(),
-          ],
-        });
-      }
-
-      // ✅ All good — assign role
-      await member.roles.add(verifiedRole);
-      users[userId].verified = true;
-
       await fs.writeFile(usersPath, JSON.stringify(users, null, 2));
-
-      return message.channel.send({
-        embeds: [
-          new EmbedBuilder()
-            .setColor(0x00ff00)
-            .setTitle("Verification Successful")
-            .setDescription(`✅ Verified as **${username}**.`)
-            .setTimestamp(),
-        ],
-      });
-
     } catch (err) {
-      console.error("Verification error:", err);
+      console.error("File write error:", err);
       return message.channel.send({
         embeds: [
           new EmbedBuilder()
             .setColor(0xff0000)
             .setTitle("Error")
-            .setDescription("❌ Something went wrong during verification. Please try again later.")
+            .setDescription("❌ Failed to save verification data. Please try again later.")
             .setTimestamp(),
         ],
       });
     }
-  },
-};
+
+    return message.channel.send({
+      embeds: [
+        new EmbedBuilder()
+          .setColor(0x3498db)
+          .setTitle("Verification Step 1")
+          .setDescription(`📋 Please copy this keyword:\n\`${keyword}\`\n\nPaste it into your **Roblox About Me** section. Once you've done that, run:\n\`!verifyroblox ${username}\` again to complete verification.`)
+          .setTimestamp(),
+      ],
+    });
+  }
+
+  if (users[userId].verified === true) {
+    return message.channel.send({
+      embeds: [
+        new EmbedBuilder()
+          .setColor(0x00ff00)
+          .setTitle("Already Verified")
+          .setDescription(`✅ You’re already verified as **${users[userId].username}**.`)
+          .setTimestamp(),
+      ],
+    });
+  }
+
+  try {
+    const robloxUserId = await getUserId(username);
+    if (!robloxUserId) {
+      return message.channel.send({
+        embeds: [
+          new EmbedBuilder()
+            .setColor(0xff0000)
+            .setTitle("User Not Found")
+            .setDescription("❌ Roblox user not found. Double-check the username.")
+            .setTimestamp(),
+        ],
+      });
+    }
+
+    const description = await getUserDescription(robloxUserId);
+    const keyword = users[userId].keyword;
+
+    if (!description.includes(keyword)) {
+      return message.channel.send({
+        embeds: [
+          new EmbedBuilder()
+            .setColor(0xffaa00)
+            .setTitle("Keyword Not Found")
+            .setDescription(`❌ Couldn’t find your keyword in your About Me. Please make sure you added:\n\`${keyword}\`\nto your Roblox profile, then try again.`)
+            .setTimestamp(),
+        ],
+      });
+    }
+
+    await member.roles.add(verifiedRole);
+    users[userId].verified = true;
+
+    try {
+      await fs.writeFile(usersPath, JSON.stringify(users, null, 2));
+    } catch (err) {
+      console.error("File write error:", err);
+      return message.channel.send({
+        embeds: [
+          new EmbedBuilder()
+            .setColor(0xff0000)
+            .setTitle("Error")
+            .setDescription("❌ Failed to save verification data after role assignment.")
+            .setTimestamp(),
+        ],
+      });
+    }
+
+    return message.channel.send({
+      embeds: [
+        new EmbedBuilder()
+          .setColor(0x00ff00)
+          .setTitle("Verification Successful")
+          .setDescription(`✅ Verified as **${username}**.`)
+          .setTimestamp(),
+      ],
+    });
+
+  } catch (err) {
+    console.error("Verification error:", err);
+    return message.channel.send({
+      embeds: [
+        new EmbedBuilder()
+          .setColor(0xff0000)
+          .setTitle("Error")
+          .setDescription("❌ Something went wrong during verification. Please try again later.")
+          .setTimestamp(),
+      ],
+    });
+  }
+}
+
