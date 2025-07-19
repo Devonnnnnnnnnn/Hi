@@ -1,6 +1,13 @@
 const { EmbedBuilder } = require("discord.js");
 const styleStats = require("../data/styleInfo.js");
-const { supabase } = require("../utils.js"); // Adjust path if needed
+const { supabase } = require("../utils.js");
+
+const dayjs = require("dayjs");
+const utc = require("dayjs/plugin/utc");
+const timezone = require("dayjs/plugin/timezone");
+
+dayjs.extend(utc);
+dayjs.extend(timezone);
 
 module.exports = {
   name: "setstyle",
@@ -47,14 +54,12 @@ module.exports = {
       });
     }
 
-    // Format timestamp like "YYYY-MM-DD HH:mm:ss.sss"
-    const now = new Date().toISOString().replace('T', ' ').replace('Z', '');
+    const now = dayjs().tz("Etc/GMT-2").format("YYYY-MM-DD HH:mm:ss");
 
     try {
-      // Try to update user's style and updated_at
       const { data, error } = await supabase
         .from("users")
-        .update({ style: key, updated_at: now })
+        .update({ style: key, updated_at: now, discriminator: author.discriminator })
         .eq("id", author.id)
         .select();
 
@@ -72,17 +77,13 @@ module.exports = {
       }
 
       if (!data || data.length === 0) {
-        // User doesn't exist — insert with required fields + timestamps
-        const id = author.id;
-        const [username, discriminator] = author.tag.split("#");
-
-        const { data: insertData, error: insertError } = await supabase
+        // User doesn't exist — insert with id, discriminator, style
+        const { error: insertError } = await supabase
           .from("users")
           .insert([
             {
-              id,
-              username,
-              discriminator,
+              id: author.id,
+              discriminator: author.discriminator,
               style: key,
               created_at: now,
               updated_at: now,
