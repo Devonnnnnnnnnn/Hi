@@ -50,7 +50,7 @@ module.exports = {
     for (const cat of commandCategories) {
       const value = cat.commands
         .map(cmd => `**${cmd.name}**\n_${cmd.desc}_`)
-        .join("\n\n");
+        .join("\n\n") + "\n\n\n";  // <-- Add 3 new lines here for bigger spacing
 
       embed.addFields({ name: cat.category, value });
     }
