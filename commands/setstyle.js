@@ -1,27 +1,19 @@
-const fs = require("fs").promises;
-const path = require("path");
 const { EmbedBuilder } = require("discord.js");
 const styleStats = require("../data/styleInfo.js");
-
-const usersPath = path.join(__dirname, "..", "data", "users.json");
-
-// Load users.json on startup
-let users = {};
-(async () => {
-  try {
-    const data = await fs.readFile(usersPath, "utf8");
-    users = JSON.parse(data);
-  } catch {
-    users = {};
-  }
-})();
+const supabase = require("../events/supabaseClient"); // Adjust path if needed
 
 module.exports = {
   name: "setstyle",
   description: "Set your style.",
+  /**
+   * @param {import("discord.js").Message} message
+   * @param {string} argsString
+   */
   async execute(message, argsString) {
+    const { author, channel } = message;
+
     if (!argsString) {
-      return message.channel.send({
+      return channel.send({
         embeds: [
           new EmbedBuilder()
             .setColor(0xff0000)
@@ -33,39 +25,65 @@ module.exports = {
     }
 
     const input = argsString.trim().toLowerCase();
-    const key = Object.keys(styleStats).find(k => k.toLowerCase() === input);
+    const key = Object.keys(styleStats).find(
+      (k) => k.toLowerCase() === input
+    );
 
     if (!key) {
-      return message.channel.send({
+      return channel.send({
         embeds: [
           new EmbedBuilder()
             .setColor(0xff0000)
             .setTitle("Style Not Found")
             .setDescription(
               `❌ Style "**${argsString}**" not found.\n` +
-              `Available styles:\n` +
-              Object.keys(styleStats).map(s => `\`${s}\``).join(", ")
+                `Available styles:\n` +
+                Object.keys(styleStats)
+                  .map((s) => `\`${s}\``)
+                  .join(", ")
             )
             .setTimestamp(),
         ],
       });
     }
 
-    const userId = message.author.id;
-
-    // Ensure user entry exists
-    if (!users[userId]) {
-      users[userId] = {};
-    }
-
-    // Set the user's style
-    users[userId].style = key;
-
     try {
-      await fs.writeFile(usersPath, JSON.stringify(users, null, 2));
+      // Update the user's style in the "users" table where id = author's Discord user ID
+      const { data, error } = await supabase
+        .from("users")
+        .update({ style: key })
+        .eq("id", author.id); // change "id" if your column name is different
+
+      if (error) {
+        console.error("Supabase update error:", error);
+        return channel.send({
+          embeds: [
+            new EmbedBuilder()
+              .setColor(0xff0000)
+              .setTitle("Error")
+              .setDescription("❌ Could not save your style. Please try again later.")
+              .setTimestamp(),
+          ],
+        });
+      }
+
+      // If no rows were updated (user not found), inform them
+      if (!data || data.length === 0) {
+        return channel.send({
+          embeds: [
+            new EmbedBuilder()
+              .setColor(0xff0000)
+              .setTitle("User Not Found")
+              .setDescription(
+                "❌ Your user record was not found in the database."
+              )
+              .setTimestamp(),
+          ],
+        });
+      }
     } catch (err) {
-      console.error("Failed to save users.json:", err);
-      return message.channel.send({
+      console.error("Unexpected error:", err);
+      return channel.send({
         embeds: [
           new EmbedBuilder()
             .setColor(0xff0000)
@@ -76,7 +94,7 @@ module.exports = {
       });
     }
 
-    return message.channel.send({
+    return channel.send({
       embeds: [
         new EmbedBuilder()
           .setColor(0x00ff00)
