@@ -1,5 +1,5 @@
-const supabase = require("../events/supabaseClient.js");
 const { EmbedBuilder } = require("discord.js");
+const { supabase } = require("../utils.js"); // adjust path as needed
 
 function generateKeyword() {
   return "veri-" + Math.random().toString(36).substring(2, 10);
@@ -27,6 +27,10 @@ async function getUserDescription(userId) {
 module.exports = {
   name: "verifyroblox",
   description: "Verify via Roblox profile keyword.",
+  /**
+   * @param {import("discord.js").Message} message
+   * @param {string} argsString
+   */
   async execute(message, argsString) {
     if (!message.guild) {
       return message.channel.send("❌ This command can only be used in a server.");
@@ -101,7 +105,7 @@ module.exports = {
     if (!record || record.username !== username) {
       const keyword = generateKeyword();
 
-      const upsertResult = await supabase
+      const { data, error: upsertError } = await supabase
         .from("roblox_verifications")
         .upsert({
           discord_user_id: discordUserId,
@@ -110,8 +114,8 @@ module.exports = {
           verified: false,
         }, { onConflict: "discord_user_id" });
 
-      if (upsertResult.error) {
-        console.error("Supabase upsert error:", upsertResult.error);
+      if (upsertError) {
+        console.error("Supabase upsert error:", upsertError);
         return message.channel.send({
           embeds: [
             new EmbedBuilder()
@@ -179,13 +183,13 @@ module.exports = {
       await member.roles.add(verifiedRole);
 
       // Update verification status
-      const updateResult = await supabase
+      const { error: updateError } = await supabase
         .from("roblox_verifications")
         .update({ verified: true })
         .eq("discord_user_id", discordUserId);
 
-      if (updateResult.error) {
-        console.error("Supabase update error:", updateResult.error);
+      if (updateError) {
+        console.error("Supabase update error:", updateError);
         return message.channel.send({
           embeds: [
             new EmbedBuilder()
