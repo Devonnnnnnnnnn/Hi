@@ -1,5 +1,5 @@
 const { EmbedBuilder } = require("discord.js");
-const supabase = require("../events/supabaseClient"); // adjust path as needed
+const { supabase } = require("../utils");
 
 async function getUserId(username) {
   const res = await fetch("https://users.roblox.com/v1/usernames/users", {
