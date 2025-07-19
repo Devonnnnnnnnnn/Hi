@@ -1,27 +1,36 @@
 const { EmbedBuilder } = require("discord.js");
 const { supabase } = require("../utils");
-
-// Import userKeywords from getkeyword
 const { userKeywords } = require("./getkeyword");
 
 async function getUserId(username) {
-  const res = await fetch("https://users.roblox.com/v1/usernames/users", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ usernames: [username] }),
-  });
-  const data = await res.json();
-  if (data && data.data && data.data.length > 0) {
-    return data.data[0].id;
+  try {
+    const res = await fetch("https://users.roblox.com/v1/usernames/users", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ usernames: [username] }),
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (data && data.data && data.data.length > 0) {
+      return data.data[0].id;
+    }
+    return null;
+  } catch (err) {
+    console.error("Error fetching Roblox user ID:", err);
+    return null;
   }
-  return null;
 }
 
 async function getUserDescription(userId) {
-  const res = await fetch(`https://users.roblox.com/v1/users/${userId}`);
-  if (!res.ok) return null;
-  const data = await res.json();
-  return data.description || "";
+  try {
+    const res = await fetch(`https://users.roblox.com/v1/users/${userId}`);
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data.description || "";
+  } catch (err) {
+    console.error("Error fetching Roblox user description:", err);
+    return null;
+  }
 }
 
 module.exports = {
@@ -45,7 +54,6 @@ module.exports = {
       });
     }
 
-    // Check if user has a generated keyword
     const keyword = userKeywords[message.author.id];
     if (!keyword) {
       return message.channel.send({
@@ -99,23 +107,42 @@ module.exports = {
       });
     }
 
-    const now = new Date().toISOString().replace("T", " ").replace("Z", "");
+    const now = new Date().toISOString();
     const discordUserId = message.author.id;
     const { username: discordUsername, discriminator } = message.author;
 
+    // Fetch existing user to get created_at if exists
+    const { data: existingUser, error: fetchError } = await supabase
+      .from("users")
+      .select("created_at")
+      .eq("id", discordUserId)
+      .single();
+
+    if (fetchError && fetchError.code !== "PGRST116") { // PGRST116 means no rows found, which is fine
+      console.error("Supabase fetch error:", fetchError);
+      return message.channel.send({
+        embeds: [
+          new EmbedBuilder()
+            .setColor(0xff0000)
+            .setTitle("Database Error")
+            .setDescription("❌ Failed to access the database. Please try again later.")
+            .setTimestamp(),
+        ],
+      });
+    }
+
+    const userData = {
+      id: discordUserId,
+      roblox: username,
+      username: discordUsername,
+      discriminator,
+      updated_at: now,
+      created_at: existingUser ? existingUser.created_at : now,
+    };
+
     const { error } = await supabase
       .from("users")
-      .upsert(
-        {
-          id: discordUserId,
-          roblox: username,
-          username: discordUsername,
-          discriminator,
-          updated_at: now,
-          created_at: now,
-        },
-        { onConflict: "id" }
-      );
+      .upsert(userData, { onConflict: "id" });
 
     if (error) {
       console.error("Supabase upsert error:", error);
