@@ -107,42 +107,7 @@ async function startBot() {
   }
 
   client.once("ready", () => {
-    console.log(`✅ Logged in as ${client.user.tag}`);
-
-    // Bitcoin blessing loop — every 6 hours
-    const STEAL_INTERVAL = 6 * 60 * 60 * 1000; // 6 hours
-
-    setInterval(async () => {
-      try {
-        const guild = client.guilds.cache.first(); // Use appropriate logic if more guilds
-        if (!guild) {
-          return console.warn("❌ Bot is not in any guilds.");
-        }
-
-        await guild.members.fetch(); // Ensure member cache is full
-
-        const eligibleMembers = guild.members.cache.filter(
-          (member) => !member.user.bot && !excludedUserIds.has(member.id)
-        );
-
-        if (eligibleMembers.size === 0) {
-          return console.warn("⚠️ No eligible members to bless.");
-        }
-
-        const target = eligibleMembers.random();
-
-        try {
-          await target.send(
-            `💻 You've been **blessed**!\n🪙 1 Bitcoin has been given to your account.`
-          );
-          console.log(`💸 Gave 1 Bitcoin to ${target.user.tag}`);
-        } catch (dmErr) {
-          console.warn(`⚠️ Couldn't DM ${target.user.tag}: ${dmErr.message}`);
-        }
-      } catch (err) {
-        console.error("❌ Error during Bitcoin giving loop:", err);
-      }
-    }, STEAL_INTERVAL);
+  console.log(`✅ Logged in as ${client.user.tag}`);
   });
 
   console.log("Logging in with token (first 10 chars):", process.env.TOKEN?.slice(0, 10));
