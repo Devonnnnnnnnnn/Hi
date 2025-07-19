@@ -1,5 +1,5 @@
 const { EmbedBuilder } = require("discord.js");
-const supabase = require("../supabaseClient"); // adjust path accordingly
+const supabase = require("../events/supabaseClient.js"); // adjust path accordingly
 
 module.exports = {
   name: "profile",
