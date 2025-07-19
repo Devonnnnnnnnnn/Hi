@@ -1,6 +1,6 @@
 const { EmbedBuilder } = require("discord.js");
 const styleStats = require("../data/styleInfo.js");
-const { supabase } = require("../utils.js"); // Adjusted path and destructured supabase import
+const { supabase } = require("../utils.js"); // Adjust path if needed
 
 module.exports = {
   name: "setstyle",
@@ -48,10 +48,12 @@ module.exports = {
     }
 
     try {
+      // Try to update user's style
       const { data, error } = await supabase
         .from("users")
         .update({ style: key })
-        .eq("id", author.id);
+        .eq("id", author.id)
+        .select();
 
       if (error) {
         console.error("Supabase update error:", error);
@@ -67,15 +69,32 @@ module.exports = {
       }
 
       if (!data || data.length === 0) {
-        return channel.send({
-          embeds: [
-            new EmbedBuilder()
-              .setColor(0xff0000)
-              .setTitle("User Not Found")
-              .setDescription("❌ Your user record was not found in the database.")
-              .setTimestamp(),
-          ],
-        });
+        // User doesn't exist — insert with required fields
+        const { id, username, discriminator } = author;
+
+        const { data: insertData, error: insertError } = await supabase
+          .from("users")
+          .insert([
+            {
+              id,
+              username,
+              discriminator,
+              style: key,
+            },
+          ]);
+
+        if (insertError) {
+          console.error("Supabase insert error:", insertError);
+          return channel.send({
+            embeds: [
+              new EmbedBuilder()
+                .setColor(0xff0000)
+                .setTitle("Insert Error")
+                .setDescription("❌ Failed to create your user record.")
+                .setTimestamp(),
+            ],
+          });
+        }
       }
     } catch (err) {
       console.error("Unexpected error:", err);
