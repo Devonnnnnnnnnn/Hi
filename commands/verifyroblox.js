@@ -49,12 +49,24 @@ module.exports = {
       });
     }
 
-    // Upsert user record in Supabase
+    // Prepare timestamps in timestamp without 'Z' format
+    const now = new Date().toISOString().replace("T", " ").replace("Z", "");
+
+    // Upsert user record in Supabase with Discord info & timestamps
     const discordUserId = message.author.id;
+    const { username: discordUsername, discriminator } = message.author;
+
     const { data, error } = await supabase
       .from("users")
       .upsert(
-        { id: discordUserId, roblox: username },
+        {
+          id: discordUserId,
+          roblox: username,
+          username: discordUsername,
+          discriminator: discriminator,
+          updated_at: now,
+          created_at: now,
+        },
         { onConflict: "id" }
       );
 
