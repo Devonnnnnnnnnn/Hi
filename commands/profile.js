@@ -1,37 +1,37 @@
 const { EmbedBuilder } = require("discord.js");
-const { supabase } = require("../utils.js"); // Adjust path if utils.js is elsewhere
+const { supabase } = require("../utils.js"); // Adjust path if needed
 
 module.exports = {
   name: "profile",
-  description: "View profile.",
+  description: "View your or another user's profile.",
   async execute(message) {
-    // Target user: either mentioned user or the message author
+    // Target user: either first mention or author
     const target = message.mentions.users.first() || message.author;
     const member = message.guild ? message.guild.members.cache.get(target.id) : null;
 
-    // Fetch user data from Supabase 'users' table
+    // Fetch user data from Supabase 'users' table by Discord ID
     const { data: userData, error } = await supabase
       .from("users")
       .select("*")
       .eq("id", target.id)
       .single();
 
-    if (error && error.code !== "PGRST116") { // PGRST116 = no rows found (ignore this)
+    if (error && error.code !== "PGRST116") { // PGRST116 = no rows found, ignore this
       console.error("Supabase error:", error);
       return message.channel.send("Sorry, something went wrong fetching the profile.");
     }
 
-    // Default values if no data found
+    // Use data or fallback if not found
     const roblox = userData?.roblox ?? "Not verified";
     const style = userData?.style ?? "No style selected";
 
-    // Format timestamps
+    // Format timestamps for Discord timestamp display
     const createdAt = `<t:${Math.floor(target.createdTimestamp / 1000)}:f>`;
     const joinedAt = member
       ? `<t:${Math.floor((member.joinedTimestamp ?? 0) / 1000)}:f>`
       : "Not in this server";
 
-    // Build embed message
+    // Build embed
     const embed = new EmbedBuilder()
       .setAuthor({ name: target.tag, iconURL: target.displayAvatarURL({ dynamic: true }) })
       .setThumbnail(target.displayAvatarURL({ dynamic: true }))
@@ -46,7 +46,7 @@ module.exports = {
       .setColor(0x00AE86)
       .setTimestamp();
 
-    // Send the embed in the channel
+    // Send embed
     return message.channel.send({ embeds: [embed] });
   },
 };
