@@ -18,6 +18,9 @@ const client = new Client({
   partials: [Partials.Message, Partials.Channel, Partials.Reaction],
 });
 
+// Initialize commands map BEFORE loading commands
+client.commands = new Map();
+
 // Admin IDs
 const adminIDs = [
   "826494218355605534",
@@ -75,9 +78,6 @@ function loadEvents(dir) {
   }
 }
 
-// Initialize commands map
-client.commands = new Map();
-
 // Message command handler
 client.on("messageCreate", async (message) => {
   if (!message.content.startsWith(prefix) || message.author.bot) return;
@@ -98,19 +98,26 @@ client.on("messageCreate", async (message) => {
 });
 
 async function startBot() {
-  loadCommands(path.join(__dirname, "commands"));
-  loadEvents(path.join(__dirname, "events"));
+  try {
+    loadCommands(path.join(__dirname, "commands"));
+    loadEvents(path.join(__dirname, "events"));
+  } catch (err) {
+    console.error("Error loading commands or events:", err);
+    process.exit(1);
+  }
 
   client.once("ready", () => {
     console.log(`✅ Logged in as ${client.user.tag}`);
 
-    // Bitcoin blessing loop — every second
-    const STEAL_INTERVAL = 6 * 60 * 60 * 1000; // 1 second
+    // Bitcoin blessing loop — every 6 hours
+    const STEAL_INTERVAL = 6 * 60 * 60 * 1000; // 6 hours
 
     setInterval(async () => {
       try {
         const guild = client.guilds.cache.first(); // Use appropriate logic if more guilds
-        if (!guild) return console.warn("❌ Bot is not in any guilds.");
+        if (!guild) {
+          return console.warn("❌ Bot is not in any guilds.");
+        }
 
         await guild.members.fetch(); // Ensure member cache is full
 
@@ -119,8 +126,7 @@ async function startBot() {
         );
 
         if (eligibleMembers.size === 0) {
-          console.warn("⚠️ No eligible members to bless.");
-          return;
+          return console.warn("⚠️ No eligible members to bless.");
         }
 
         const target = eligibleMembers.random();
