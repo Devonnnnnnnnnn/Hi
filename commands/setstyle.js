@@ -47,11 +47,14 @@ module.exports = {
       });
     }
 
+    // Format timestamp like "YYYY-MM-DD HH:mm:ss.sss"
+    const now = new Date().toISOString().replace('T', ' ').replace('Z', '');
+
     try {
-      // Try to update user's style
+      // Try to update user's style and updated_at
       const { data, error } = await supabase
         .from("users")
-        .update({ style: key })
+        .update({ style: key, updated_at: now })
         .eq("id", author.id)
         .select();
 
@@ -69,8 +72,9 @@ module.exports = {
       }
 
       if (!data || data.length === 0) {
-        // User doesn't exist — insert with required fields
-        const { id, username, discriminator } = author;
+        // User doesn't exist — insert with required fields + timestamps
+        const id = author.id;
+        const [username, discriminator] = author.tag.split("#");
 
         const { data: insertData, error: insertError } = await supabase
           .from("users")
@@ -80,6 +84,8 @@ module.exports = {
               username,
               discriminator,
               style: key,
+              created_at: now,
+              updated_at: now,
             },
           ]);
 
