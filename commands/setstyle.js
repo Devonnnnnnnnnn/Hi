@@ -1,6 +1,6 @@
 const { EmbedBuilder } = require("discord.js");
 const styleStats = require("../data/styleInfo.js");
-const supabase = require("../events/supabaseClient"); // Adjust path if needed
+const { supabase } = require("../utils.js"); // Adjusted path and destructured supabase import
 
 module.exports = {
   name: "setstyle",
@@ -48,11 +48,10 @@ module.exports = {
     }
 
     try {
-      // Update the user's style in the "users" table where id = author's Discord user ID
       const { data, error } = await supabase
         .from("users")
         .update({ style: key })
-        .eq("id", author.id); // change "id" if your column name is different
+        .eq("id", author.id);
 
       if (error) {
         console.error("Supabase update error:", error);
@@ -67,16 +66,13 @@ module.exports = {
         });
       }
 
-      // If no rows were updated (user not found), inform them
       if (!data || data.length === 0) {
         return channel.send({
           embeds: [
             new EmbedBuilder()
               .setColor(0xff0000)
               .setTitle("User Not Found")
-              .setDescription(
-                "❌ Your user record was not found in the database."
-              )
+              .setDescription("❌ Your user record was not found in the database.")
               .setTimestamp(),
           ],
         });
