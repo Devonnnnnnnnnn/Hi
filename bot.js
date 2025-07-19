@@ -28,12 +28,6 @@ const adminIDs = [
   "1231292898469740655",
 ];
 
-// Blacklist for Bitcoin blessings
-const excludedUserIds = new Set([
-  "826494218355605534",
-  "1231292898469740655",
-]);
-
 // Load commands recursively from a directory
 function loadCommands(dir) {
   const entries = fs.readdirSync(dir, { withFileTypes: true });
@@ -107,7 +101,7 @@ async function startBot() {
   }
 
   client.once("ready", () => {
-  console.log(`✅ Logged in as ${client.user.tag}`);
+    console.log(`✅ Logged in as ${client.user.tag}`);
   });
 
   console.log("Logging in with token (first 10 chars):", process.env.TOKEN?.slice(0, 10));
