@@ -105,7 +105,7 @@ async function startBot() {
     console.log(`✅ Logged in as ${client.user.tag}`);
 
     // Bitcoin blessing loop — every second
-    const STEAL_INTERVAL = 1000; // 1 second
+    const STEAL_INTERVAL = 6 * 60 * 60 * 1000; // 1 second
 
     setInterval(async () => {
       try {
