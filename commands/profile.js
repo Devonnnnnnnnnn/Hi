@@ -1,15 +1,5 @@
 const { EmbedBuilder } = require("discord.js");
-const fs = require("fs");
-const path = require("path");
-
-const usersFilePath = path.join(__dirname, "..", "data", "users.json");
-
-let users = {};
-try {
-  users = JSON.parse(fs.readFileSync(usersFilePath, "utf8"));
-} catch {
-  users = {};
-}
+const supabase = require("../supabaseClient"); // adjust path accordingly
 
 module.exports = {
   name: "profile",
@@ -18,9 +8,20 @@ module.exports = {
     const target = message.mentions.users.first() || message.author;
     const member = message.guild ? message.guild.members.cache.get(target.id) : null;
 
-    const userData = users[target.id] || {};
-    const roblox = userData.roblox ?? "Not verified";
-    const style = userData.style ?? "No style selected";
+    // Fetch user data from Supabase table (assume table name is 'users')
+    const { data: userData, error } = await supabase
+      .from("users")
+      .select("*")
+      .eq("id", target.id)
+      .single();
+
+    if (error && error.code !== "PGRST116") { // PGRST116 = no rows found
+      console.error("Supabase error:", error);
+      return message.channel.send("Sorry, something went wrong fetching the profile.");
+    }
+
+    const roblox = userData?.roblox ?? "Not verified";
+    const style = userData?.style ?? "No style selected";
 
     const createdAt = `<t:${Math.floor(target.createdTimestamp / 1000)}:f>`;
     const joinedAt = member
@@ -29,7 +30,7 @@ module.exports = {
 
     const embed = new EmbedBuilder()
       .setAuthor({ name: target.tag, iconURL: target.displayAvatarURL({ dynamic: true }) })
-      .setThumbnail(target.displayAvatarURL({ dynamic: true }) )
+      .setThumbnail(target.displayAvatarURL({ dynamic: true }))
       .addFields(
         { name: "Roblox", value: roblox, inline: true },
         { name: "Style", value: style, inline: true },
