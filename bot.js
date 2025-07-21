@@ -76,6 +76,8 @@ function loadEvents(dir) {
 client.on("messageCreate", async (message) => {
   if (!message.content.startsWith(prefix) || message.author.bot) return;
 
+  console.log(`📨 Command received from: ${message.author.tag}`);
+
   const args = message.content.slice(prefix.length).trim().split(/\s+/);
   const commandName = args.shift().toLowerCase();
 
