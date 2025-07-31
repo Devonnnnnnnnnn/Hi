@@ -14,12 +14,12 @@ module.exports = {
   description: "Set your style.",
   /**
    * @param {import("discord.js").Message} message
-   * @param {string} argsString
+   * @param {string[]} args
    */
-  async execute(message, argsString) {
+  async execute(message, args) {
     const { author, channel } = message;
 
-    if (!argsString) {
+    if (!args.length) {
       return channel.send({
         embeds: [
           new EmbedBuilder()
@@ -31,7 +31,9 @@ module.exports = {
       });
     }
 
-    const input = argsString.trim().toLowerCase();
+    // Join args array into a single string (in case style has spaces)
+    const input = args.join(" ").trim().toLowerCase();
+
     const key = Object.keys(styleStats).find(
       (k) => k.toLowerCase() === input
     );
@@ -43,11 +45,11 @@ module.exports = {
             .setColor(0xff0000)
             .setTitle("Style Not Found")
             .setDescription(
-              `❌ Style "**${argsString}**" not found.\n` +
-                `Available styles:\n` +
-                Object.keys(styleStats)
-                  .map((s) => `\`${s}\``)
-                  .join(", ")
+              `❌ Style "**${input}**" not found.\n` +
+              `Available styles:\n` +
+              Object.keys(styleStats)
+                .map((s) => `\`${s}\``)
+                .join(", ")
             )
             .setTimestamp(),
         ],
@@ -77,7 +79,6 @@ module.exports = {
       }
 
       if (!data || data.length === 0) {
-        // User doesn't exist — insert with id, discriminator, style
         const { error: insertError } = await supabase
           .from("users")
           .insert([
