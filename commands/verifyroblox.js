@@ -36,12 +36,16 @@ async function getUserDescription(userId) {
 module.exports = {
   name: "verifyroblox",
   description: "Verify your Discord with your Roblox username and your unique keyword.",
-  async execute(message, argsString) {
+  /**
+   * @param {import("discord.js").Message} message
+   * @param {string[]} args
+   */
+  async execute(message, args) {
     if (!message.guild) {
       return message.channel.send("❌ This command can only be used in a server.");
     }
 
-    const username = argsString.trim();
+    const username = args.join(" ").trim();
     if (!username) {
       return message.channel.send({
         embeds: [
@@ -118,7 +122,7 @@ module.exports = {
       .eq("id", discordUserId)
       .single();
 
-    if (fetchError && fetchError.code !== "PGRST116") { // PGRST116 means no rows found, which is fine
+    if (fetchError && fetchError.code !== "PGRST116") {
       console.error("Supabase fetch error:", fetchError);
       return message.channel.send({
         embeds: [
