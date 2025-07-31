@@ -72,7 +72,7 @@ function loadEvents(dir) {
   }
 }
 
-// Message command handler
+// Message command handler - pass args as array
 client.on("messageCreate", async (message) => {
   if (!message.content.startsWith(prefix) || message.author.bot) return;
 
@@ -83,8 +83,8 @@ client.on("messageCreate", async (message) => {
   if (!command) return;
 
   try {
-    const argsString = args.join(" ");
-    await command.execute(message, argsString, adminIDs);
+    // Pass args as an array
+    await command.execute(message, args, adminIDs);
   } catch (error) {
     console.error(error);
     message.reply("There was an error executing that command.");
